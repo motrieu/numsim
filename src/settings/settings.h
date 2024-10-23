@@ -32,6 +32,14 @@ struct Settings
     //! parse a text file with settings, each line contains "<parameterName> = <value>"
     void loadFromFile(std::string filename);
 
+    void setParameters(std::string &parameterName, std::string &valueString);
+
+    const std::string extractValueString(std::string &line);
+
+    const std::string extractParameterName(std::string &line);
+
+    void removeStartWhitespace(std::string &line);
+
     //! output all settings to console
     void printSettings();
 };
