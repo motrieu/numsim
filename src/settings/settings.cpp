@@ -2,7 +2,6 @@
 #include <fstream>
 #include <iomanip>
 
-
 void Settings::loadFromFile(std::string filename)
 {
     // open file
@@ -36,12 +35,12 @@ void Settings::loadFromFile(std::string filename)
             parameterName = extractParameterName(line);
             valueString = extractValueString(line);
 
-            setParameters(parameterName, valueString);
+            setParameter(parameterName, valueString);
         }
     }
 }
 
-void Settings::setParameters(std::string &parameterName, std::string &valueString)
+void Settings::setParameter(std::string &parameterName, std::string &valueString)
 {
     if (parameterName == "physicalSizeX")
         physicalSize[0] = std::stod(valueString);
@@ -107,12 +106,12 @@ const std::string Settings::extractValueString(std::string &line)
     std::string extractedString;
     int valueStartIndex = line.find_first_not_of(" \t", line.find("=") + 1);
     extractedString = line.substr(valueStartIndex, line.find_first_of(" #\t\n", valueStartIndex) - valueStartIndex);
-    
+
     return extractedString;
 }
 
 const std::string Settings::extractParameterName(std::string &line)
-{   
+{
     std::string paramName;
     paramName = line.substr(0, line.find_first_of(" =\t"));
     return paramName;
