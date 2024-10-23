@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iomanip>
 
+
 void Settings::loadFromFile(std::string filename)
 {
     // open file
