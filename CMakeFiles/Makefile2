@@ -96,12 +96,12 @@ src/clean: src/CMakeFiles/numsim.dir/clean
 src/CMakeFiles/numsim.dir/all:
 	$(MAKE) $(MAKESILENT) -f src/CMakeFiles/numsim.dir/build.make src/CMakeFiles/numsim.dir/depend
 	$(MAKE) $(MAKESILENT) -f src/CMakeFiles/numsim.dir/build.make src/CMakeFiles/numsim.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/simon/numsim/CMakeFiles --progress-num=1,2,3 "Built target numsim"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/simon/numsim/CMakeFiles --progress-num=1,2,3,4 "Built target numsim"
 .PHONY : src/CMakeFiles/numsim.dir/all
 
 # Build rule for subdir invocation for target.
 src/CMakeFiles/numsim.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/simon/numsim/CMakeFiles 3
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/simon/numsim/CMakeFiles 4
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/CMakeFiles/numsim.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/simon/numsim/CMakeFiles 0
 .PHONY : src/CMakeFiles/numsim.dir/rule

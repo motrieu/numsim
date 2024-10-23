@@ -34,62 +34,62 @@ void Settings::loadFromFile(std::string filename)
         {
             parameterName = line.substr(0, line.find_first_of(" =\t"));
             int valueStartIndex = line.find_first_not_of(" \t", line.find("=") + 1);
-            valueString = line.substr(valueStartIndex, line.find_first_of(" \t\n", valueStartIndex));
+            valueString = line.substr(valueStartIndex, line.find_first_of(" #\t\n", valueStartIndex) - valueStartIndex);
             if (parameterName == "physicalSizeX")
-                physicalSize[0] = stod(valueString);
+                physicalSize[0] = std::stod(valueString);
             else if (parameterName == "physicalSizeY")
-                physicalSize[1] = stod(valueString);
+                physicalSize[1] = std::stod(valueString);
             else if (parameterName == "endTime")
-                endTime = stod(valueString);
+                endTime = std::stod(valueString);
             else if (parameterName == "re")
-                re = stod(valueString);
+                re = std::stod(valueString);
             else if (parameterName == "gX")
-                g[0] = stod(valueString);
+                g[0] = std::stod(valueString);
             else if (parameterName == "gY")
-                g[1] = stod(valueString);
+                g[1] = std::stod(valueString);
             else if (parameterName == "dirichletBottomX")
-                dirichletBcBottom[0] = stod(valueString);
+                dirichletBcBottom[0] = std::stod(valueString);
             else if (parameterName == "dirichletBottomY")
-                dirichletBcBottom[1] = stod(valueString);
+                dirichletBcBottom[1] = std::stod(valueString);
             else if (parameterName == "dirichletTopX")
-                dirichletBcTop[0] = stod(valueString);
+                dirichletBcTop[0] = std::stod(valueString);
             else if (parameterName == "dirichletTopY")
-                dirichletBcTop[1] = stod(valueString);
+                dirichletBcTop[1] = std::stod(valueString);
             else if (parameterName == "dirichletLeftX")
-                dirichletBcLeft[0] = stod(valueString);
+                dirichletBcLeft[0] = std::stod(valueString);
             else if (parameterName == "dirichletLeftY")
-                dirichletBcLeft[1] = stod(valueString);
+                dirichletBcLeft[1] = std::stod(valueString);
             else if (parameterName == "dirichletRightX")
-                dirichletBcRight[0] = stod(valueString);
+                dirichletBcRight[0] = std::stod(valueString);
             else if (parameterName == "dirichletRightY")
-                dirichletBcRight[1] = stod(valueString);
+                dirichletBcRight[1] = std::stod(valueString);
             else if (parameterName == "nCellsX")
-                nCells[0] = stoi(valueString);
+                nCells[0] = (int)std::stod(valueString);
             else if (parameterName == "nCellsY")
-                nCells[1] = stoi(valueString);
+                nCells[1] = (int)std::stod(valueString);
             else if (parameterName == "useDonorCell")
             {
-                if (stoi(valueString) == 1)
+                if (valueString.compare("true"))
                     useDonorCell = true;
-                else if (stoi(valueString) == 0)
+                else if (valueString.compare("false"))
                     useDonorCell = false;
                 else
                     throw std::invalid_argument("Assigned value for useDonorCell is not of type boolean.");
             }
             else if (parameterName == "alpha")
-                alpha = stod(valueString);
+                alpha = std::stod(valueString);
             else if (parameterName == "tau")
-                tau = stod(valueString);
+                tau = std::stod(valueString);
             else if (parameterName == "maximumDt")
-                maximumDt = stod(valueString);
+                maximumDt = std::stod(valueString);
             else if (parameterName == "pressureSolver")
                 pressureSolver = valueString;
             else if (parameterName == "omega")
-                omega = stod(valueString);
+                omega = std::stod(valueString);
             else if (parameterName == "epsilon")
-                epsilon = stod(valueString);
+                epsilon = std::stod(valueString);
             else if (parameterName == "maximumNumberOfIterations")
-                maximumNumberOfIterations = stoi(valueString);
+                maximumNumberOfIterations = (int)std::stod(valueString);
             else
                 throw std::invalid_argument("The parameter " + parameterName + " is not implemented.");
         }

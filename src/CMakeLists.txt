@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.8)
 add_executable(${PROJECT_NAME}
    main.cpp
    output_writer/write_paraview_output.cpp
+   settings/settings.cpp
 )
 
 # Add the project directory to include directories, to be able to include all project header files from anywhere

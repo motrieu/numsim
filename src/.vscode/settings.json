@@ -1,5 +1,9 @@
 {
     "files.associations": {
-        "array": "cpp"
+        "array": "cpp",
+        "cstdlib": "cpp",
+        "iostream": "cpp",
+        "*.tcc": "cpp",
+        "stdexcept": "cpp"
     }
 }

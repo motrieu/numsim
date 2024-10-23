@@ -223,6 +223,30 @@ output_writer/write_paraview_output.cpp.s:
 	cd /home/simon/numsim && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/numsim.dir/build.make src/CMakeFiles/numsim.dir/output_writer/write_paraview_output.cpp.s
 .PHONY : output_writer/write_paraview_output.cpp.s
 
+settings/settings.o: settings/settings.cpp.o
+.PHONY : settings/settings.o
+
+# target to build an object file
+settings/settings.cpp.o:
+	cd /home/simon/numsim && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/numsim.dir/build.make src/CMakeFiles/numsim.dir/settings/settings.cpp.o
+.PHONY : settings/settings.cpp.o
+
+settings/settings.i: settings/settings.cpp.i
+.PHONY : settings/settings.i
+
+# target to preprocess a source file
+settings/settings.cpp.i:
+	cd /home/simon/numsim && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/numsim.dir/build.make src/CMakeFiles/numsim.dir/settings/settings.cpp.i
+.PHONY : settings/settings.cpp.i
+
+settings/settings.s: settings/settings.cpp.s
+.PHONY : settings/settings.s
+
+# target to generate assembly for a file
+settings/settings.cpp.s:
+	cd /home/simon/numsim && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/numsim.dir/build.make src/CMakeFiles/numsim.dir/settings/settings.cpp.s
+.PHONY : settings/settings.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -242,6 +266,9 @@ help:
 	@echo "... output_writer/write_paraview_output.o"
 	@echo "... output_writer/write_paraview_output.i"
 	@echo "... output_writer/write_paraview_output.s"
+	@echo "... settings/settings.o"
+	@echo "... settings/settings.i"
+	@echo "... settings/settings.s"
 .PHONY : help
 
 

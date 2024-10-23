@@ -3,6 +3,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/numsim.dir/main.cpp.o.d"
   "CMakeFiles/numsim.dir/output_writer/write_paraview_output.cpp.o"
   "CMakeFiles/numsim.dir/output_writer/write_paraview_output.cpp.o.d"
+  "CMakeFiles/numsim.dir/settings/settings.cpp.o"
+  "CMakeFiles/numsim.dir/settings/settings.cpp.o.d"
   "numsim"
   "numsim.pdb"
 )

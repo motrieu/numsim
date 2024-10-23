@@ -10,6 +10,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/simon/numsim/src/main.cpp" "src/CMakeFiles/numsim.dir/main.cpp.o" "gcc" "src/CMakeFiles/numsim.dir/main.cpp.o.d"
   "/home/simon/numsim/src/output_writer/write_paraview_output.cpp" "src/CMakeFiles/numsim.dir/output_writer/write_paraview_output.cpp.o" "gcc" "src/CMakeFiles/numsim.dir/output_writer/write_paraview_output.cpp.o.d"
+  "/home/simon/numsim/src/settings/settings.cpp" "src/CMakeFiles/numsim.dir/settings/settings.cpp.o" "gcc" "src/CMakeFiles/numsim.dir/settings/settings.cpp.o.d"
   )
 
 # Targets to which this target links.
