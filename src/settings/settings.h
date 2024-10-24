@@ -37,7 +37,7 @@ public:
     //! output all settings to console
     void printSettings();
 
-private:
+    // private:
     /// @brief Set specified parameter by autoconverting given string
     /// @param parameterName Parameter identifier in struct to be changed
     /// @param valueString String of value that should be set. Will be auto converted
