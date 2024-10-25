@@ -31,5 +31,14 @@
 *.out
 *.app
 
-# Makefile
+# Cmake & Makefiles
+*.cmake
 Makefile
+CMakeCache.txt
+*.check_cache
+build/*
+!build/src
+build/src/*
+!build/src/parameters.txt
+/CMakeFiles
+**/CMakeFiles
