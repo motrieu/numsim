@@ -42,3 +42,4 @@ build/src/*
 !build/src/parameters.txt
 /CMakeFiles
 **/CMakeFiles
+.vscode
