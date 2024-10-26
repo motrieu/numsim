@@ -1,5 +1,5 @@
 # Master Lecture Numerical Simulation (University of Stuttgart)
-# Moritz Trieu, Simon Grether, Nina Lock
+Members: Moritz Trieu, Simon Grether, Nina Lock
 
 ## About
 ### Assignment 1
