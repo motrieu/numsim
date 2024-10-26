@@ -24,6 +24,9 @@ add_executable(
 
   # Test files
   test_settings.cpp
+  test_discretization.cpp
+  test_solver.cpp
+  test_storage.cpp
 
   # Dependecies
   ../src/settings/settings.cpp
