@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
-#include <src/settings/settings.h>
+#include "settings/settings.h"
 
-TEST(SettingsTest, RemoteStartWhiteSpace)
+TEST(SettingsTest, RemoveStartWhiteSpace)
 {
     std::string line = "  param = value  # a comment";
 
     Settings settings;
-    settings::removeStartWhitespace(line);
+    settings.removeStartWhitespace(line);
 
-    EXPECT_EQ(linem "param = value  # a comment")
+    EXPECT_EQ(line, "param = value  # a comment");
 }
