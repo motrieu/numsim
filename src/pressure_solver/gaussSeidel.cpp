@@ -1,4 +1,4 @@
-#include "pressure_solver/gaussSeidel.h"
+#include "gaussSeidel.h"
 
 void GaussSeidel::solve()
 {

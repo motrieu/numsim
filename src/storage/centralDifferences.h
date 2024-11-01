@@ -1,6 +1,6 @@
 #pragma once
 
-#include "storage/discretization.h"
+#include "discretization.h"
 
 
 class CentralDifferences : public Discretization

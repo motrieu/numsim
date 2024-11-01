@@ -1,6 +1,6 @@
 #pragma once
 
-#include "storage/staggeredGrid.h"
+#include "staggeredGrid.h"
 #include <array>
 
 

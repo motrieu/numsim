@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include "pressure_solver/pressureSolver.h"
+#include "pressureSolver.h"
 
 class GaussSeidel : public PressureSolver
 {

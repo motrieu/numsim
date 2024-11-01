@@ -1,4 +1,4 @@
-#include "pressure_solver/pressureSolver.h"
+#include "pressureSolver.h"
 
 
 PressureSolver::PressureSolver(std::shared_ptr<Discretization> discretization, double epsilon, int maximumNumberOfIterations) :

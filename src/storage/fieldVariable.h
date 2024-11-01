@@ -1,6 +1,6 @@
 #pragma once
 
-#include "storage/array2d.h"
+#include "array2d.h"
 #include <array>
 
 /** A field variable is the discretization of a scalar function f(x) with x in the computational domain.
