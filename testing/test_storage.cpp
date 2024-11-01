@@ -1,16 +1,19 @@
 #include <gtest/gtest.h>
+#include <array>
 #include "storage/array2d.h"
 #include "storage/fieldVariable.h"
 
 class ArrayTest : public testing::Test
 {
-protected:
-    ArrayTest()
+public:
+    ArrayTest() :
+        arr({3, 3})
     {
-        std::array<int, 2> size = {3, 3};
-        Array2D arr(size);
+        // std::array<int,2> size{3, 3};
+        // Array2D arr = Array2D::Array2D(size);
     }
 
+protected:
     Array2D arr;
 };
 
@@ -21,26 +24,33 @@ protected:
     {
         std::array<int, 2> size = {3,3};
         std::array<double, 2> originU = {0, 0};
-        std::arary<double, 2> originP = {0, -0.5};
+        std::array<double, 2> originP = {0, -0.25};
         std::array<double, 2> meshWidthU = {1, 1};
-        std::array<double, 2> meshIwdthP = {0.25, 0.25};
+        std::array<double, 2> meshWidthP = {0.5, 0.5};
 
-        FieldVariable varU(size, originU, meshWidthU);
-        FieldVariable varP(size, originP, meshWidthP);
+        varU = std::make_unique<FieldVariable>(size, originU, meshWidthU);
+        varP = std::make_unique<FieldVariable>(size, originP, meshWidthP);
 
-        for (int i = 0, i < size[0], j++)
+        for (int i = 0; i < size[0]; i++)
         {
-            for {int j = 0, j < size[1], j++}
+            for (int j = 0; j < size[1]; j++)
             {
-                varU.size_(i, j) = j;
-                varP.size_(i, j) = std::max(i, j);
+                (*varU)(i, j) = i;
+                (*varP)(i, j) = std::max(i, j);
             }
         }
     }
 
-    FieldVariable varU;
-    FieldVariable varP;
+    std::unique_ptr<FieldVariable> varU;
+    std::unique_ptr<FieldVariable> varP;
     
+}; 
+
+TEST(Arraytest, CreateArray)
+{
+    std::array<int,2> size{3,3};
+    Array2D arr = Array2D(size);
+
 }
 
 TEST_F(ArrayTest, GetSize)
@@ -73,3 +83,39 @@ TEST_F(ArrayTest, GetValueOutOfBounds)
     EXPECT_DEATH({ double val = arr(5, 2); }, "");
 }
 
+TEST_F(FieldVariableTest, interpolateUAtCorner)
+{
+    double val = varU->interpolateAt(0, 3);
+    EXPECT_EQ(val, 0);
+    
+}
+
+TEST_F(FieldVariableTest, interpolatePAtCorner)
+{
+    double val = varP->interpolateAt(0, 3 * 0.5 - 0.25);
+    EXPECT_EQ(val, 0);
+}
+
+
+TEST_F(FieldVariableTest, interpolateUAtMiddle)
+{
+    double val = varU->interpolateAt(1.5, 1.5);
+    EXPECT_EQ(val, 1);
+}
+
+TEST_F(FieldVariableTest, interpolatePAtMiddle)
+{
+    double val = varP->interpolateAt(0.75, 0.75);
+    EXPECT_EQ(val, 1.5);
+}
+
+TEST_F(FieldVariableTest, interpolateUOutOfBounds)
+{
+    EXPECT_DEATH({varP->interpolateAt(-0.5, -0.5);}, "");
+
+}
+
+TEST_F(FieldVariableTest, interpolatePOutOfBounds)
+{
+    EXPECT_DEATH({varU->interpolateAt(-0.5, -0.5);}, "");
+}
