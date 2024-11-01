@@ -1,4 +1,4 @@
-#include "storage/fieldVariable.h"
+#include "fieldVariable.h"
 
 #include <cmath>
 
@@ -12,9 +12,9 @@ double FieldVariable::interpolateAt(double x, double y) const
     double xTransformed = (x - origin_[0])/meshWidth_[0];
     double yTransformed = (y - origin_[1])/meshWidth_[1];
 
-    int leftXIndex = (int)xTransformed;
+    int leftXIndex = xTransformed;
     int rightXIndex = leftXIndex + 1;
-    int lowerYIndex = (int)yTransformed;
+    int lowerYIndex = yTransformed;
     int upperYIndex = lowerYIndex + 1;
 
     double percentageX = xTransformed - std::floor(xTransformed);
