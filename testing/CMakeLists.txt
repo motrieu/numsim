@@ -30,6 +30,8 @@ add_executable(
 
   # Dependecies
   ../src/settings/settings.cpp
+  ../src/storage/array2d.cpp
+  ../src/storage/fieldVariable.cpp
 )
 
 # Include source directory to be visible from everytest
