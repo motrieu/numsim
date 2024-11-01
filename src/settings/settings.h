@@ -29,9 +29,31 @@ struct Settings
     double epsilon = 1e-5;               //< tolerance for the residual in the pressure solver
     int maximumNumberOfIterations = 1e5; //< maximum number of iterations in the solver
 
-    //! parse a text file with settings, each line contains "<parameterName> = <value>"
+public:
+    /// @brief Load and set parameters in struct from specified text file ! parse a text file with settings, each line contains "<parameterName> = <value>"
+    /// @param filename Unix-type path to parameters file
     void loadFromFile(std::string filename);
 
     //! output all settings to console
     void printSettings();
+
+    // private:
+    /// @brief Set specified parameter by autoconverting given string
+    /// @param parameterName Parameter identifier in struct to be changed
+    /// @param valueString String of value that should be set. Will be auto converted
+    void setParameter(std::string &parameterName, std::string &valueString);
+
+    /// @brief Extract the substring specifing the parameter value in the given file line
+    /// @param line Line in file stream to be operated on
+    /// @return Substring specifing the parameter value
+    const std::string extractValueString(std::string &line);
+
+    /// @brief Extract the substring specifing the parameter name in the given file line
+    /// @param line Line in file stream to be operated on
+    /// @return Substring specifing the parameter name
+    const std::string extractParameterName(std::string &line);
+
+    /// @brief Remove leading white space in line.
+    /// @param line Line in file stream to be updated. Will be mutated
+    void removeStartWhitespace(std::string &line);
 };
