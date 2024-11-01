@@ -25,75 +25,101 @@ void Settings::loadFromFile(std::string filename)
         if (file.eof())
             break;
 
-        // remove whitespace at beginning of line
-        line.erase(0, line.find_first_not_of(" \t"));
+        removeStartWhitespace(line);
 
         std::string parameterName;
         std::string valueString;
+
         if ((line[0] != '#') && (line.find("=") != std::string::npos))
         {
-            parameterName = line.substr(0, line.find_first_of(" =\t"));
-            int valueStartIndex = line.find_first_not_of(" \t", line.find("=") + 1);
-            valueString = line.substr(valueStartIndex, line.find_first_of(" #\t\n", valueStartIndex) - valueStartIndex);
-            if (parameterName == "physicalSizeX")
-                physicalSize[0] = std::stod(valueString);
-            else if (parameterName == "physicalSizeY")
-                physicalSize[1] = std::stod(valueString);
-            else if (parameterName == "endTime")
-                endTime = std::stod(valueString);
-            else if (parameterName == "re")
-                re = std::stod(valueString);
-            else if (parameterName == "gX")
-                g[0] = std::stod(valueString);
-            else if (parameterName == "gY")
-                g[1] = std::stod(valueString);
-            else if (parameterName == "dirichletBottomX")
-                dirichletBcBottom[0] = std::stod(valueString);
-            else if (parameterName == "dirichletBottomY")
-                dirichletBcBottom[1] = std::stod(valueString);
-            else if (parameterName == "dirichletTopX")
-                dirichletBcTop[0] = std::stod(valueString);
-            else if (parameterName == "dirichletTopY")
-                dirichletBcTop[1] = std::stod(valueString);
-            else if (parameterName == "dirichletLeftX")
-                dirichletBcLeft[0] = std::stod(valueString);
-            else if (parameterName == "dirichletLeftY")
-                dirichletBcLeft[1] = std::stod(valueString);
-            else if (parameterName == "dirichletRightX")
-                dirichletBcRight[0] = std::stod(valueString);
-            else if (parameterName == "dirichletRightY")
-                dirichletBcRight[1] = std::stod(valueString);
-            else if (parameterName == "nCellsX")
-                nCells[0] = (int)std::stod(valueString);
-            else if (parameterName == "nCellsY")
-                nCells[1] = (int)std::stod(valueString);
-            else if (parameterName == "useDonorCell")
-            {
-                if (valueString.compare("true"))
-                    useDonorCell = true;
-                else if (valueString.compare("false"))
-                    useDonorCell = false;
-                else
-                    throw std::invalid_argument("Assigned value for useDonorCell is not of type boolean.");
-            }
-            else if (parameterName == "alpha")
-                alpha = std::stod(valueString);
-            else if (parameterName == "tau")
-                tau = std::stod(valueString);
-            else if (parameterName == "maximumDt")
-                maximumDt = std::stod(valueString);
-            else if (parameterName == "pressureSolver")
-                pressureSolver = valueString;
-            else if (parameterName == "omega")
-                omega = std::stod(valueString);
-            else if (parameterName == "epsilon")
-                epsilon = std::stod(valueString);
-            else if (parameterName == "maximumNumberOfIterations")
-                maximumNumberOfIterations = (int)std::stod(valueString);
-            else
-                throw std::invalid_argument("The parameter " + parameterName + " is not implemented.");
+            parameterName = extractParameterName(line);
+            valueString = extractValueString(line);
+
+            setParameter(parameterName, valueString);
         }
     }
+}
+
+void Settings::setParameter(std::string &parameterName, std::string &valueString)
+{
+    if (parameterName == "physicalSizeX")
+        physicalSize[0] = std::stod(valueString);
+    else if (parameterName == "physicalSizeY")
+        physicalSize[1] = std::stod(valueString);
+    else if (parameterName == "endTime")
+        endTime = std::stod(valueString);
+    else if (parameterName == "re")
+        re = std::stod(valueString);
+    else if (parameterName == "gX")
+        g[0] = std::stod(valueString);
+    else if (parameterName == "gY")
+        g[1] = std::stod(valueString);
+    else if (parameterName == "dirichletBottomX")
+        dirichletBcBottom[0] = std::stod(valueString);
+    else if (parameterName == "dirichletBottomY")
+        dirichletBcBottom[1] = std::stod(valueString);
+    else if (parameterName == "dirichletTopX")
+        dirichletBcTop[0] = std::stod(valueString);
+    else if (parameterName == "dirichletTopY")
+        dirichletBcTop[1] = std::stod(valueString);
+    else if (parameterName == "dirichletLeftX")
+        dirichletBcLeft[0] = std::stod(valueString);
+    else if (parameterName == "dirichletLeftY")
+        dirichletBcLeft[1] = std::stod(valueString);
+    else if (parameterName == "dirichletRightX")
+        dirichletBcRight[0] = std::stod(valueString);
+    else if (parameterName == "dirichletRightY")
+        dirichletBcRight[1] = std::stod(valueString);
+    else if (parameterName == "nCellsX")
+        nCells[0] = (int)std::stod(valueString);
+    else if (parameterName == "nCellsY")
+        nCells[1] = (int)std::stod(valueString);
+    else if (parameterName == "useDonorCell")
+    {
+        if (valueString.compare("true"))
+            useDonorCell = true;
+        else if (valueString.compare("false"))
+            useDonorCell = false;
+        else
+            throw std::invalid_argument("Assigned value for useDonorCell is not of type boolean.");
+    }
+    else if (parameterName == "alpha")
+        alpha = std::stod(valueString);
+    else if (parameterName == "tau")
+        tau = std::stod(valueString);
+    else if (parameterName == "maximumDt")
+        maximumDt = std::stod(valueString);
+    else if (parameterName == "pressureSolver")
+        pressureSolver = valueString;
+    else if (parameterName == "omega")
+        omega = std::stod(valueString);
+    else if (parameterName == "epsilon")
+        epsilon = std::stod(valueString);
+    else if (parameterName == "maximumNumberOfIterations")
+        maximumNumberOfIterations = (int)std::stod(valueString);
+    else
+        throw std::invalid_argument("The parameter " + parameterName + " is not implemented.");
+}
+
+const std::string Settings::extractValueString(std::string &line)
+{
+    std::string extractedString;
+    int valueStartIndex = line.find_first_not_of(" \t", line.find("=") + 1);
+    extractedString = line.substr(valueStartIndex, line.find_first_of(" #\t\n", valueStartIndex) - valueStartIndex);
+
+    return extractedString;
+}
+
+const std::string Settings::extractParameterName(std::string &line)
+{
+    std::string paramName;
+    paramName = line.substr(0, line.find_first_of(" =\t"));
+    return paramName;
+}
+void Settings::removeStartWhitespace(std::string &line)
+{
+    // remove whitespace at beginning of line
+    line.erase(0, line.find_first_not_of(" \t"));
 }
 
 void Settings::printSettings()
