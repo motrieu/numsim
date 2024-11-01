@@ -26,5 +26,24 @@ void PressureSolver::setBoundaryValues()
         (*discretization_).p(0,j) = pInnerLeft;
         (*discretization_).p(nCellsX-1,j) = pInnerRight;
     }
+}
+
+const double PressureSolver::calc2NormOfP() const
+{
+    const double dx = (*discretization_).dx();
+    const double dy = (*discretization_).dy();
     
+    double resNormSquared = 0;
+    for (int j=(*discretization_).pJBegin(); j < (*discretization_).pJEnd(); j++)
+    {
+        for (int i=(*discretization_).pIBegin(); i < (*discretization_).pIEnd(); i++)
+        {
+            const double rhs = (*discretization_).rhs(i,j);
+            const double Pxx = ((*discretization_).p(i+1,j) - 2.0*(*discretization_).p(i,j) + (*discretization_).p(i-1,j)) / (dx*dx);
+            const double Pyy = ((*discretization_).p(i,j+1) - 2.0*(*discretization_).p(i,j) + (*discretization_).p(i,j-1)) / (dy*dy);
+            const double res = rhs - (Pxx + Pyy);
+            resNormSquared += res*res;
+        }
+    }
+    return resNormSquared;
 }

@@ -22,6 +22,10 @@ protected:
     /// @brief sets boundary values for field variable p, the pressure value of the closest inner cell is used to set the boundary 
     void setBoundaryValues();
 
+    /// @brief calculates the 2-Norm of the pressure field
+    /// @return squared 2-Norm of p
+    const double calc2NormOfP() const;
+
     std::shared_ptr<Discretization> discretization_;
     double epsilon_;
     int	maximumNumberOfIterations_;

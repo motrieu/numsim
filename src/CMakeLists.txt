@@ -7,6 +7,7 @@ add_executable(${PROJECT_NAME}
    output_writer/write_paraview_output.cpp
    pressure_solver/gaussSeidel.cpp
    pressure_solver/pressureSolver.cpp
+   pressure_solver/sor.cpp
    settings/settings.cpp
    storage/array2d.cpp
    storage/centralDifferences.cpp
