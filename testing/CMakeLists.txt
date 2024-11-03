@@ -30,6 +30,11 @@ add_executable(
 
   # Dependecies
   ../src/settings/settings.cpp
+  ../src/storage/array2d.cpp
+  ../src/storage/staggeredGrid.cpp
+  ../src/storage/fieldVariable.cpp
+  ../src/storage/discretization.cpp
+  ../src/storage/centralDifferences.cpp
 )
 
 # Include source directory to be visible from everytest
