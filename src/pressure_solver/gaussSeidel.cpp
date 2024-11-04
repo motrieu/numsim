@@ -26,7 +26,9 @@ void GaussSeidel::solve()
         }
         
         resNormSquared = calc2NormOfP();
-        n++; 
+        n++;
+
+        setBoundaryValues();
     }
     while ((n < maximumNumberOfIterations_) && (resNormSquared > numberOfValues*epsSquared));
 }

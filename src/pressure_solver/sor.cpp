@@ -33,6 +33,8 @@ void SOR::solve()
 
         resNormSquared = calc2NormOfP();
         n++;
+
+        setBoundaryValues();
     }
     while ((n < maximumNumberOfIterations_) && (resNormSquared > numberOfValues*epsSquared));
 }

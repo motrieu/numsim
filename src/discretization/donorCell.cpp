@@ -1,6 +1,11 @@
 #include "donorCell.h"
 #include <cmath>
 
+DonorCell::DonorCell(std::array<int,2> nCells, std::array<double,2> meshWidth, double alpha) :
+    Discretization(nCells, meshWidth), alpha_(alpha)
+{
+}
+
 double DonorCell::computeDu2Dx(int i, int j) const
 {
     const double uRightMean = (u(i,j) + u(i+1,j)) / 2.0;

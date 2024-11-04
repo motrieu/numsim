@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include "storage/discretization.h"
+#include "discretization/discretization.h"
 
 class PressureSolver
 {
