@@ -8,23 +8,20 @@ PressureSolver::PressureSolver(std::shared_ptr<Discretization> discretization, d
 
 void PressureSolver::setBoundaryValues() 
 {
-    const int nCellsX = (*discretization_).nCells()[0];
-    const int nCellsY = (*discretization_).nCells()[1];
-
-    for (int i=1; i < nCellsX-1; i++)
+    for (int i=(*discretization_).pIBegin(); i < (*discretization_).pIEnd(); i++)
     { 
-        const double pInnerLower = (*discretization_).p(i,1);
-        const double pInnerUpper = (*discretization_).p(i,nCellsY-2);
-        (*discretization_).p(i,0) = pInnerLower;
-        (*discretization_).p(i,nCellsY-1) = pInnerUpper;
+        const double pInnerLower = (*discretization_).p(i,(*discretization_).pJBegin());
+        const double pInnerUpper = (*discretization_).p(i,(*discretization_).pJEnd()-1);
+        (*discretization_).p(i,(*discretization_).pJBegin()-1) = pInnerLower;
+        (*discretization_).p(i,(*discretization_).pJEnd()) = pInnerUpper;
     }
 
-    for (int j=1; j < nCellsY-1; j++)
+    for (int j=(*discretization_).pJBegin(); j < (*discretization_).pJEnd(); j++)
     {
-        const double pInnerLeft = (*discretization_).p(1,j);
-        const double pInnerRight = (*discretization_).p(nCellsX-2,j);
-        (*discretization_).p(0,j) = pInnerLeft;
-        (*discretization_).p(nCellsX-1,j) = pInnerRight;
+        const double pInnerLeft = (*discretization_).p((*discretization_).pIBegin(),j);
+        const double pInnerRight = (*discretization_).p((*discretization_).pIEnd()-1,j);
+        (*discretization_).p((*discretization_).pIBegin()-1,j) = pInnerLeft;
+        (*discretization_).p((*discretization_).pIEnd(),j) = pInnerRight;
     }
 }
 
@@ -45,5 +42,6 @@ const double PressureSolver::calc2NormOfP() const
             resNormSquared += res*res;
         }
     }
+
     return resNormSquared;
 }

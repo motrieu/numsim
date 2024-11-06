@@ -5,6 +5,36 @@
 #include <memory>
 
 
+void Computation::runSimulation()
+{
+    double time = 0.0;
+
+    // (*outputWriterParaview_).writeFile(time);
+
+    while (time < settings_.endTime-1e-8)
+    {
+        computeTimeStepWidth();
+
+        if (!(time+dt_ <= settings_.endTime))
+            dt_ = settings_.endTime - time;
+
+        computePreliminaryVelocities();
+        
+        computeRightHandSide();
+
+        computePressure();
+
+        computeVelocities();
+
+        applyBCInHaloCells();
+
+        time += dt_;
+
+        (*outputWriterParaview_).writeFile(time);
+        (*outputWriterText_).writeFile(time);
+    }
+}
+
 void Computation::initialize(int argc, char *argv[])
 {
     assert(argc == 2);
@@ -15,8 +45,8 @@ void Computation::initialize(int argc, char *argv[])
     // load settings from file
     settings_.loadFromFile(filename);
 
-    const double meshWidthX = settings_.physicalSize[0]/settings_.nCells[0];
-    const double meshWidthY = settings_.physicalSize[1]/settings_.nCells[1];
+    const double meshWidthX = settings_.physicalSize[0]/(settings_.nCells[0]-2);
+    const double meshWidthY = settings_.physicalSize[1]/(settings_.nCells[1]-2);
     meshWidth_ = {meshWidthX, meshWidthY};
 
     if (settings_.useDonorCell)
@@ -30,9 +60,17 @@ void Computation::initialize(int argc, char *argv[])
         pressureSolver_ = std::make_unique<GaussSeidel>(discretization_, settings_.epsilon, settings_.maximumNumberOfIterations);
     else
         throw std::invalid_argument("Only SOR and GaussSeidel are supported as pressure solvers.");
+    
+    applyBCOnBoundary();
+    applyBCInHaloCells();
+    applyPreliminaryBCOnBoundary();
+    // applyPreliminaryBCInHaloCells();
+
+    outputWriterParaview_ = std::make_unique<OutputWriterParaview>(discretization_);
+    outputWriterText_ = std::make_unique<OutputWriterText>(discretization_);
 }
 
-void Computation::applyBoundaryValues()
+void Computation::applyBCOnBoundary()
 {
     for (int j=(*discretization_).uJBegin(); j < (*discretization_).uJEnd(); j++)
     {
@@ -44,6 +82,10 @@ void Computation::applyBoundaryValues()
         (*discretization_).v(i,(*discretization_).vJBegin()-1) = settings_.dirichletBcBottom[1];
         (*discretization_).v(i,(*discretization_).vJEnd()) = settings_.dirichletBcTop[1];
     }
+}
+
+void Computation::applyBCInHaloCells()
+{
     for (int j=(*discretization_).vJBegin(); j < (*discretization_).vJEnd(); j++)
     {
         const double vLeft = (*discretization_).v((*discretization_).vIBegin(),j);
@@ -59,10 +101,10 @@ void Computation::applyBoundaryValues()
         (*discretization_).u(i,(*discretization_).uJEnd()) = 2.0*settings_.dirichletBcTop[0] - uUpper;
     }
 
-    applyPreliminaryBoundaryValues();
+    // applyPreliminaryBCInHaloCells();
 }
 
-void Computation::applyPreliminaryBoundaryValues()
+void Computation::applyPreliminaryBCOnBoundary()
 {
     for (int j=(*discretization_).uJBegin(); j < (*discretization_).uJEnd(); j++)
     {
@@ -78,6 +120,10 @@ void Computation::applyPreliminaryBoundaryValues()
         (*discretization_).g(i,(*discretization_).vJBegin()-1) = vLower;
         (*discretization_).g(i,(*discretization_).vJEnd()) = vUpper;
     }
+}
+
+/*void Computation::applyPreliminaryBCInHaloCells()
+{
     for (int j=(*discretization_).vJBegin(); j < (*discretization_).vJEnd(); j++)
     {
         const double vLeft = (*discretization_).v((*discretization_).vIBegin()-1,j);
@@ -92,7 +138,7 @@ void Computation::applyPreliminaryBoundaryValues()
         (*discretization_).f(i,(*discretization_).uJBegin()-1) = uLower;
         (*discretization_).f(i,(*discretization_).uJEnd()) = uUpper;
     }
-}
+}*/
 
 void Computation::computeTimeStepWidth()
 {

@@ -1,12 +1,13 @@
-#include "settings/settings.h"
-
-#include <iostream>
-#include <cstdlib>
+#include "computation/computation.h"
 
 int main(int argc, char *argv[])
 {
 
-  // call only computation
+  Computation computation = Computation();
+
+  computation.initialize(argc, argv);
+
+  computation.runSimulation();
 
   return EXIT_SUCCESS;
 }

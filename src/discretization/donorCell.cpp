@@ -53,7 +53,6 @@ double DonorCell::computeDuvDy(int i, int j) const
     const double uUpperDifference = (u(i,j) - u(i,j+1)) / 2.0;
     const double uLowerDifference = (u(i,j-1) - u(i,j)) / 2.0;
     
-
     return (1.0/dy()) * (vUpperMean*uUpperMean - vLowerMean*uLowerMean) 
             + (alpha_/dy()) * (std::abs(vUpperMean)*uUpperDifference - std::abs(vLowerMean)*uLowerDifference);
 }
