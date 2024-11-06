@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.8)
 
+# Define the project name.
+project(numsim)
+
 # Specify the name of the executable (${PROJECT_NAME} which is equal to what was set in the project() command).
 # Also specify the source files.
 add_executable(${PROJECT_NAME}
@@ -22,7 +25,8 @@ add_executable(${PROJECT_NAME}
 
 # Add the project directory to include directories, to be able to include all project header files from anywhere
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
-target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/src)
+# target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/src)
+
 # Search for the external package "VTK"
 set(VTK_DIR ~/software/VTK-9.1.0/build)
 find_package(VTK)
