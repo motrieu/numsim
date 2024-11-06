@@ -40,7 +40,7 @@ build/*
 !build/src
 !build/clusterRunScript.sh
 build/src/*
-!build/src/parameters.txt
+!build/src/lid_driven_cavity.txt
 /CMakeFiles
 **/CMakeFiles
 .vscode
