@@ -31,7 +31,7 @@ void Computation::runSimulation()
         time += dt_;
 
         (*outputWriterParaview_).writeFile(time);
-        (*outputWriterText_).writeFile(time);
+        // (*outputWriterText_).writeFile(time);
     }
 }
 

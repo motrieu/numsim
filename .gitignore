@@ -40,6 +40,7 @@ build/*
 !build/src
 build/src/*
 !build/src/parameters.txt
+!build/src/clusterRunScript.sh
 /CMakeFiles
 **/CMakeFiles
 .vscode
