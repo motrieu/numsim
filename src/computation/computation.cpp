@@ -12,11 +12,11 @@ void Computation::runSimulation()
 
     // (*outputWriterParaview_).writeFile(time);
 
-    while (time < settings_.endTime-1e-8)
+    while (time < settings_.endTime)
     {
         computeTimeStepWidth();
 
-        if (!(time+dt_ <= settings_.endTime))
+        if (time+dt_ > settings_.endTime - dt_/100.0)
             dt_ = settings_.endTime - time;
 
         computePreliminaryVelocities();
@@ -148,14 +148,19 @@ void Computation::computeTimeStepWidth()
     
     double uAbsMax = 0.0;
     double vAbsMax = 0.0;
-    for (int i=0; i < settings_.nCells[0]; i++)
+    for (int i=0; i < (*discretization_).nCells()[0]; i++)
     {
-        for (int j=0; j < settings_.nCells[1]; j++)
+        for (int j=0; j < (*discretization_).nCells()[1]; j++)
         {
-            uAbsMax = std::max(uAbsMax, std::fabs((*discretization_).u(i,j)));
-            vAbsMax = std::max(vAbsMax, std::fabs((*discretization_).v(i,j)));
+            const double uAbs = std::fabs((*discretization_).u(i,j));
+            const double vAbs = std::fabs((*discretization_).v(i,j));
+            if (uAbs > uAbsMax)
+                uAbsMax = uAbs;
+            if (vAbs > vAbsMax)
+                vAbsMax = vAbs;
         }
     }
+
     const double dtConvectiveU = meshWidth_[0] / uAbsMax;
     const double dtConvectiveV = meshWidth_[1] / vAbsMax;
 

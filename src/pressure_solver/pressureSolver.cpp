@@ -8,7 +8,7 @@ PressureSolver::PressureSolver(std::shared_ptr<Discretization> discretization, d
 
 void PressureSolver::setBoundaryValues() 
 {
-    for (int i=(*discretization_).pIBegin(); i < (*discretization_).pIEnd(); i++)
+    for (int i=0; i < (*discretization_).nCells()[0]; i++) //(*discretization_).pIBegin(); i < (*discretization_).pIEnd(); i++)
     { 
         const double pInnerLower = (*discretization_).p(i,(*discretization_).pJBegin());
         const double pInnerUpper = (*discretization_).p(i,(*discretization_).pJEnd()-1);
@@ -16,7 +16,7 @@ void PressureSolver::setBoundaryValues()
         (*discretization_).p(i,(*discretization_).pJEnd()) = pInnerUpper;
     }
 
-    for (int j=(*discretization_).pJBegin(); j < (*discretization_).pJEnd(); j++)
+    for (int j=0; j < (*discretization_).nCells()[1]; j++) //(*discretization_).pJBegin(); j < (*discretization_).pJEnd(); j++)
     {
         const double pInnerLeft = (*discretization_).p((*discretization_).pIBegin(),j);
         const double pInnerRight = (*discretization_).p((*discretization_).pIEnd()-1,j);
