@@ -3,6 +3,7 @@
 #include <cassert>
 #include <array>
 #include <memory>
+#include <cmath>
 
 
 void Computation::runSimulation()
@@ -151,8 +152,8 @@ void Computation::computeTimeStepWidth()
     {
         for (int j=0; j < settings_.nCells[1]; j++)
         {
-            uAbsMax = std::max(uAbsMax, std::abs((*discretization_).u(i,j)));
-            vAbsMax = std::max(vAbsMax, std::abs((*discretization_).v(i,j)));
+            uAbsMax = std::max(uAbsMax, std::fabs((*discretization_).u(i,j)));
+            vAbsMax = std::max(vAbsMax, std::fabs((*discretization_).v(i,j)));
         }
     }
     const double dtConvectiveU = meshWidth_[0] / uAbsMax;

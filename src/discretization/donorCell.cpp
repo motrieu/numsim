@@ -14,7 +14,7 @@ double DonorCell::computeDu2Dx(int i, int j) const
     const double uLeftDifference = (u(i-1,j) - u(i,j)) / 2.0;
 
     return (1/dx()) * (uRightMean*uRightMean - uLeftMean*uLeftMean)
-                + (alpha_/dx()) * (std::abs(uRightMean)*uRightDifference - std::abs(uLeftMean)*uLeftDifference);
+                + (alpha_/dx()) * (std::fabs(uRightMean)*uRightDifference - std::fabs(uLeftMean)*uLeftDifference);
    
 }
  	
@@ -26,7 +26,7 @@ double DonorCell::computeDv2Dy(int i, int j) const
     const double vLowerDifference = (v(i,j-1) - v(i,j)) / 2.0;
 
     return (1.0/dy()) * (vUpperMean*vUpperMean - vLowerMean*vLowerMean) 
-                + (alpha_/dy()) * (std::abs(vUpperMean)*vUpperDifference - std::abs(vLowerMean)*vLowerDifference);
+                + (alpha_/dy()) * (std::fabs(vUpperMean)*vUpperDifference - std::fabs(vLowerMean)*vLowerDifference);
 }
 
 double DonorCell::computeDuvDx(int i, int j) const
@@ -40,7 +40,7 @@ double DonorCell::computeDuvDx(int i, int j) const
     const double vLeftDifference = (v(i-1,j) - v(i,j)) / 2.0;
 
     return (1.0/dx()) * (uRightMean*vRightMean - uLeftMean*vLeftMean) 
-                + (alpha_/dx()) * (std::abs(uRightMean)*vRightDifference - std::abs(uLeftMean)*vLeftDifference);
+                + (alpha_/dx()) * (std::fabs(uRightMean)*vRightDifference - std::fabs(uLeftMean)*vLeftDifference);
 }
 
 double DonorCell::computeDuvDy(int i, int j) const
@@ -54,5 +54,5 @@ double DonorCell::computeDuvDy(int i, int j) const
     const double uLowerDifference = (u(i,j-1) - u(i,j)) / 2.0;
     
     return (1.0/dy()) * (vUpperMean*uUpperMean - vLowerMean*uLowerMean) 
-            + (alpha_/dy()) * (std::abs(vUpperMean)*uUpperDifference - std::abs(vLowerMean)*uLowerDifference);
+            + (alpha_/dy()) * (std::fabs(vUpperMean)*uUpperDifference - std::fabs(vLowerMean)*uLowerDifference);
 }
