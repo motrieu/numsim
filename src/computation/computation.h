@@ -27,11 +27,9 @@ private:
 
     void applyBCOnBoundary();
 
-    void applyBCInHaloCells();
-
     void applyPreliminaryBCOnBoundary();
 
-    // void applyPreliminaryBCInHaloCells();
+    void applyPreliminaryBCInHaloCells();
     
     void computeTimeStepWidth();
  	
