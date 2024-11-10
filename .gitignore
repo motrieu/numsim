@@ -38,8 +38,9 @@ CMakeCache.txt
 *.check_cache
 build/*
 !build/src
+!build/lid_driven_cavity.txt
+!build/clusterRunScript.sh
 build/src/*
-!build/src/parameters.txt
 /CMakeFiles
 **/CMakeFiles
 .vscode

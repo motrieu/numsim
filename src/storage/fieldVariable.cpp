@@ -9,25 +9,25 @@ FieldVariable::FieldVariable(std::array<int,2> size, std::array<double,2> origin
 
 double FieldVariable::interpolateAt(double x, double y) const 
 {
-    double xTransformed = (x - origin_[0])/meshWidth_[0];
-    double yTransformed = (y - origin_[1])/meshWidth_[1];
+  const double xTransformed = (x - origin_[0])/meshWidth_[0];
+  const double yTransformed = (y - origin_[1])/meshWidth_[1];
 
-    int leftXIndex = xTransformed;
-    int rightXIndex = leftXIndex + 1;
-    int lowerYIndex = yTransformed;
-    int upperYIndex = lowerYIndex + 1;
+  const int leftXIndex = xTransformed;
+  const int rightXIndex = leftXIndex + 1;
+  const int lowerYIndex = yTransformed;
+  const int upperYIndex = lowerYIndex + 1;
 
-    double percentageX = xTransformed - std::floor(xTransformed);
-    double percentageY = yTransformed - std::floor(yTransformed);
+  const double percentageX = xTransformed - std::floor(xTransformed);
+  const double percentageY = yTransformed - std::floor(yTransformed);
 
-    double fvLowerLeft = (*this)(leftXIndex, lowerYIndex);
-    double fvLowerRight = (*this)(rightXIndex, lowerYIndex);
-    double fvUpperLeft = (*this)(leftXIndex, upperYIndex);
-    double fvUpperRight = (*this)(rightXIndex, upperYIndex);
+  const double fvLowerLeft = (*this)(leftXIndex, lowerYIndex);
+  const double fvLowerRight = (*this)(rightXIndex, lowerYIndex);
+  const double fvUpperLeft = (*this)(leftXIndex, upperYIndex);
+  const double fvUpperRight = (*this)(rightXIndex, upperYIndex);
     
-    double horizontalInterpolationLower = fvLowerLeft + percentageX * (fvLowerRight - fvLowerLeft);
-    double horizontalInterpolationUpper = fvUpperLeft + percentageX * (fvUpperRight - fvUpperLeft);
-    double interpolatedValue = horizontalInterpolationLower + percentageY * (horizontalInterpolationUpper - horizontalInterpolationLower);
+  const double horizontalInterpolationLower = fvLowerLeft + percentageX * (fvLowerRight - fvLowerLeft);
+  const double horizontalInterpolationUpper = fvUpperLeft + percentageX * (fvUpperRight - fvUpperLeft);
+  const double interpolatedValue = horizontalInterpolationLower + percentageY * (horizontalInterpolationUpper - horizontalInterpolationLower);
 
-    return interpolatedValue;
+  return interpolatedValue;
 }

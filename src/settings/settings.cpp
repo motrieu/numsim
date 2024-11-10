@@ -71,14 +71,14 @@ void Settings::setParameter(std::string &parameterName, std::string &valueString
     else if (parameterName == "dirichletRightY")
         dirichletBcRight[1] = std::stod(valueString);
     else if (parameterName == "nCellsX")
-        nCells[0] = (int)std::stod(valueString);
+        nCells[0] = (int)std::stod(valueString) + 2;
     else if (parameterName == "nCellsY")
-        nCells[1] = (int)std::stod(valueString);
+        nCells[1] = (int)std::stod(valueString) + 2;
     else if (parameterName == "useDonorCell")
     {
-        if (valueString.compare("true"))
+        if (valueString == "true")
             useDonorCell = true;
-        else if (valueString.compare("false"))
+        else if (valueString == "false")
             useDonorCell = false;
         else
             throw std::invalid_argument("Assigned value for useDonorCell is not of type boolean.");

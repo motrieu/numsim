@@ -1,5 +1,4 @@
 #include "staggeredGrid.h"
-#include "fieldVariable.h"
 
 //constructor
 StaggeredGrid::StaggeredGrid(std::array<int,2> nCells, std::array<double,2> meshWidth) :

@@ -1,32 +1,13 @@
-#include "output_writer/write_paraview_output.h"
-#include "settings/settings.h"
-
-#include <iostream>
-#include <cstdlib>
+#include "computation/computation.h"
 
 int main(int argc, char *argv[])
 {
-  // if the number of given command line arguments is only 1 (= the program name), print out usage information and exit
-  if (argc == 1)
-  {
-    std::cout << "usage: " << argv[0] << " <filename>" << std::endl;
-    return EXIT_FAILURE;
-  }
 
-  // read in the first argument
-  std::string filename = argv[1];
+  Computation computation = Computation();
 
-  Settings settings;
-  // load settings from file
-  settings.loadFromFile(filename);
-  // display all settings on console
-  settings.printSettings();
+  computation.initialize(argc, argv);
 
-  // write 5 output files
-  for (int i = 0; i < 5; i++)
-  {
-    writeParaviewOutput(i);
-  }
+  computation.runSimulation();
 
   return EXIT_SUCCESS;
 }
