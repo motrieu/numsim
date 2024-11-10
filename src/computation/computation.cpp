@@ -10,12 +10,10 @@ void Computation::runSimulation()
 {
     double time = 0.0;
 
-    // (*outputWriterParaview_).writeFile(time);
     while (time < settings_.endTime)
     {
         applyBCOnBoundary();
         applyPreliminaryBCOnBoundary();
-        applyPreliminaryBCInHaloCells();
 
         computeTimeStepWidth();
 
@@ -110,24 +108,6 @@ void Computation::applyPreliminaryBCOnBoundary()
         const double vUpper = (*discretization_).v(i,(*discretization_).vJEnd());
         (*discretization_).g(i,(*discretization_).vJBegin()-1) = vLower;
         (*discretization_).g(i,(*discretization_).vJEnd()) = vUpper;
-    }
-}
-
-void Computation::applyPreliminaryBCInHaloCells()
-{
-    for (int j=0; j < (*discretization_).nCells()[1]; j++)
-    {
-        const double vLeft = (*discretization_).v((*discretization_).vIBegin()-1,j);
-        const double vRight = (*discretization_).v((*discretization_).vIEnd(),j);
-        (*discretization_).g((*discretization_).vIBegin()-1,j) = vLeft;
-        (*discretization_).g((*discretization_).vIEnd(),j) = vRight;
-    }
-    for (int i=0; i < (*discretization_).nCells()[0]; i++)
-    {
-        const double uLower = (*discretization_).u(i,(*discretization_).uJBegin()-1);
-        const double uUpper = (*discretization_).u(i,(*discretization_).uJEnd());
-        (*discretization_).f(i,(*discretization_).uJBegin()-1) = uLower;
-        (*discretization_).f(i,(*discretization_).uJEnd()) = uUpper;
     }
 }
 
