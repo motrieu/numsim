@@ -164,7 +164,7 @@ void Computation::computeTimeStepWidth()
     const double dtConvectiveU = meshWidth_[0] / uAbsMax;
     const double dtConvectiveV = meshWidth_[1] / vAbsMax;
 
-    dt_ = settings_.tau * std::min({dtDiffusive, dtConvectiveU, dtConvectiveV});
+    dt_ = settings_.tau * std::min({dtDiffusive, dtConvectiveU, dtConvectiveV, settings_.maximumDt});
 }
 
 void Computation::computePreliminaryVelocities()

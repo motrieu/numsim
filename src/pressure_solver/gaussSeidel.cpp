@@ -12,9 +12,9 @@ void GaussSeidel::solve()
     
     do
     {
-        for (int j=(*discretization_).pJBegin(); j < (*discretization_).pJEnd(); j++)
+        for (int i=(*discretization_).pIBegin(); i < (*discretization_).pIEnd(); i++)
         {
-            for (int i=(*discretization_).pIBegin(); i < (*discretization_).pIEnd(); i++)
+            for (int j=(*discretization_).pJBegin(); j < (*discretization_).pJEnd(); j++)
             {
                 const double prefactor = (dx*dx*dy*dy) / (2.0*(dx*dx+dy*dy));
                 const double firstSummand = ((*discretization_).p(i-1,j) + (*discretization_).p(i+1,j)) / (dx*dx);
