@@ -7,6 +7,7 @@ class CentralDifferences : public Discretization
 {
 public:
 
+    // make Discretization constructor available in Central Differences
     using Discretization::Discretization;
     
     /// @brief compute the first derivative of u^2 in x-direction in element i,j

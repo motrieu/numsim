@@ -8,14 +8,16 @@ PressureSolver::PressureSolver(std::shared_ptr<Discretization> discretization, d
 
 void PressureSolver::setBoundaryValues() 
 {
+    //sets boundary conditions for p: p(i,0) = p(i,1), p(i,N+1) = p(i,N)
     for (int i=0; i < (*discretization_).nCells()[0]; i++)
-    { 
+    {
         const double pInnerLower = (*discretization_).p(i,(*discretization_).pJBegin());
         const double pInnerUpper = (*discretization_).p(i,(*discretization_).pJEnd()-1);
         (*discretization_).p(i,(*discretization_).pJBegin()-1) = pInnerLower;
         (*discretization_).p(i,(*discretization_).pJEnd()) = pInnerUpper;
     }
 
+    //sets boundary conditions for p: p(0,j) = p(1,j), p(N+1,j) = p(N,j)
     for (int j=0; j < (*discretization_).nCells()[1]; j++)
     {
         const double pInnerLeft = (*discretization_).p((*discretization_).pIBegin(),j);
@@ -25,7 +27,7 @@ void PressureSolver::setBoundaryValues()
     }
 }
 
-const double PressureSolver::calc2NormOfP() const
+const double PressureSolver::calcResNormSquared() const
 {
     const double dx = (*discretization_).dx();
     const double dy = (*discretization_).dy();
@@ -39,6 +41,7 @@ const double PressureSolver::calc2NormOfP() const
             const double Pxx = ((*discretization_).p(i+1,j) - 2.0*(*discretization_).p(i,j) + (*discretization_).p(i-1,j)) / (dx*dx);
             const double Pyy = ((*discretization_).p(i,j+1) - 2.0*(*discretization_).p(i,j) + (*discretization_).p(i,j-1)) / (dy*dy);
             const double res = rhs - (Pxx + Pyy);
+
             resNormSquared += res*res;
         }
     }

@@ -25,11 +25,13 @@ void Settings::loadFromFile(std::string filename)
         if (file.eof())
             break;
 
-        removeStartWhitespace(line);
+        removeWhitespaceAtBeginning(line);
 
         std::string parameterName;
         std::string valueString;
 
+        // checks if line is a comment and if line contains a "="-sign
+        // if it contains a "="-sign (i.e. a parameter is defined) and it is not a comment, the parameter is parsed, otherwise the line is ignored
         if ((line[0] != '#') && (line.find("=") != std::string::npos))
         {
             parameterName = extractParameterName(line);
@@ -116,9 +118,8 @@ const std::string Settings::extractParameterName(std::string &line)
     paramName = line.substr(0, line.find_first_of(" =\t"));
     return paramName;
 }
-void Settings::removeStartWhitespace(std::string &line)
+void Settings::removeWhitespaceAtBeginning(std::string &line)
 {
-    // remove whitespace at beginning of line
     line.erase(0, line.find_first_not_of(" \t"));
 }
 

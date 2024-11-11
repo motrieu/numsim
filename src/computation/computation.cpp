@@ -12,10 +12,13 @@ void Computation::runSimulation()
 
     while (time < settings_.endTime)
     {
+        // boundary conditions of u and v in halo cells need to be set in each time step
         applyBCInHaloCells();
 
+        // time step width needs to be calculated each time step to ensure stability
         computeTimeStepWidth();
 
+        // ensures that the last time step leads exactly to the demanded end time 
         if (time+dt_ > settings_.endTime - dt_/100.0)
             dt_ = settings_.endTime - time;
 
@@ -44,15 +47,18 @@ void Computation::initialize(int argc, char *argv[])
     // load settings from file
     settings_.loadFromFile(filename);
 
+    // calculates mesh width in x- and y-direction based on given parameters
     const double meshWidthX = settings_.physicalSize[0]/(settings_.nCells[0]-2);
     const double meshWidthY = settings_.physicalSize[1]/(settings_.nCells[1]-2);
     meshWidth_ = {meshWidthX, meshWidthY};
 
+    // either the Central Differences or the Donor cell scheme is used
     if (settings_.useDonorCell)
         discretization_ = std::make_shared<DonorCell>(settings_.nCells, meshWidth_, settings_.alpha);
     else
         discretization_ = std::make_shared<CentralDifferences>(settings_.nCells, meshWidth_);
 
+    // either the Gauss-Seidel or the SOR algorithm is used
     if (settings_.pressureSolver == "SOR")
         pressureSolver_ = std::make_unique<SOR>(discretization_, settings_.epsilon, settings_.maximumNumberOfIterations, settings_.omega);
     else if (settings_.pressureSolver == "GaussSeidel")
@@ -63,18 +69,23 @@ void Computation::initialize(int argc, char *argv[])
     outputWriterParaview_ = std::make_unique<OutputWriterParaview>(discretization_);
     outputWriterText_ = std::make_unique<OutputWriterText>(discretization_);
 
+    // boundary conditions for u and v on the boundary faces only need to be set once in the beginning of the computation
     applyBCOnBoundary();
+
+    // boundary conditions for F and G on the boundary faces only need to be set once in the beginning of the computation
     applyPreliminaryBCOnBoundary();
 }
 
 void Computation::applyBCOnBoundary()
 {
+    // sets boundary conditions for u(0,j) and u(N,j) based on given Dirichlet conditions
     for (int j=0; j < (*discretization_).nCells()[1]; j++)
     {
         (*discretization_).u((*discretization_).uIBegin()-1,j) = settings_.dirichletBcLeft[0];
         (*discretization_).u((*discretization_).uIEnd(),j) = settings_.dirichletBcRight[0];
     }
 
+    // sets boundary conditions for v(i,0) and v(i,N) based on given Dirichlet conditions
     for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
     {
         (*discretization_).v(i,(*discretization_).vJBegin()-1) = settings_.dirichletBcBottom[1];
@@ -84,6 +95,7 @@ void Computation::applyBCOnBoundary()
 
 void Computation::applyBCInHaloCells()
 {
+    // sets boundary conditions for u(i,0) and u(i,N+1) based on given Dirichlet conditions and the inner cell values u(i,1), u(i,N)
     for (int i=(*discretization_).uIBegin(); i < (*discretization_).uIEnd(); i++)
     {
         const double uLower = (*discretization_).u(i,(*discretization_).uJBegin());
@@ -91,6 +103,8 @@ void Computation::applyBCInHaloCells()
         (*discretization_).u(i,(*discretization_).uJBegin()-1) = 2.0*settings_.dirichletBcBottom[0] - uLower;
         (*discretization_).u(i,(*discretization_).uJEnd()) = 2.0*settings_.dirichletBcTop[0] - uUpper;
     }
+
+    // sets boundary conditions for v(0,j) and v(N+1,j) based on given Dirichlet conditions and the inner cell values v(1,j), v(N,j)
     for (int j=0; j < (*discretization_).nCells()[1]; j++)
     {
         const double vLeft = (*discretization_).v((*discretization_).vIBegin(),j);
@@ -102,6 +116,7 @@ void Computation::applyBCInHaloCells()
 
 void Computation::applyPreliminaryBCOnBoundary()
 {
+    // sets boundary values of F equal to boundary values of u(0,j), u(N,j)
     for (int j=(*discretization_).uJBegin(); j < (*discretization_).uJEnd(); j++)
     {
         const double uLeft = (*discretization_).u((*discretization_).uIBegin()-1,j);
@@ -109,6 +124,8 @@ void Computation::applyPreliminaryBCOnBoundary()
         (*discretization_).f((*discretization_).uIBegin()-1,j) = uLeft;
         (*discretization_).f((*discretization_).uIEnd(),j) = uRight;
     }
+
+    // sets boundary values of G equal to boundary values of v(i,0), v(i,N)
     for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
     {
         const double vLower = (*discretization_).v(i,(*discretization_).vJBegin()-1);
@@ -141,6 +158,8 @@ void Computation::computeTimeStepWidth()
     const double dtConvectiveU = meshWidth_[0] / uAbsMax;
     const double dtConvectiveV = meshWidth_[1] / vAbsMax;
 
+    // makes sure that all stability conditions (the convective conditions and the diffusive condition) are fulfilled
+    // and that the demanded maximal time step is not exceeded
     dt_ = settings_.tau * std::min({dtDiffusive, dtConvectiveU, dtConvectiveV, settings_.maximumDt});
 }
 

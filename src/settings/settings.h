@@ -37,23 +37,25 @@ public:
     //! output all settings to console
     void printSettings();
 
-    // private:
-    /// @brief Set specified parameter by autoconverting given string
-    /// @param parameterName Parameter identifier in struct to be changed
-    /// @param valueString String of value that should be set. Will be auto converted
-    void setParameter(std::string &parameterName, std::string &valueString);
+private:
+    
+    /// @brief removes white space in the beginning of the line
+    /// @param line line in file stream to be updated, will be mutated
+    void removeWhitespaceAtBeginning(std::string &line);
 
-    /// @brief Extract the substring specifing the parameter value in the given file line
-    /// @param line Line in file stream to be operated on
-    /// @return Substring specifing the parameter value
-    const std::string extractValueString(std::string &line);
-
-    /// @brief Extract the substring specifing the parameter name in the given file line
-    /// @param line Line in file stream to be operated on
-    /// @return Substring specifing the parameter name
+    /// @brief extracts the substring specifying the parameter name in the given file line
+    /// @param line line in file stream to be operated on
+    /// @return substring specifying the parameter name
     const std::string extractParameterName(std::string &line);
 
-    /// @brief Remove leading white space in line.
-    /// @param line Line in file stream to be updated. Will be mutated
-    void removeStartWhitespace(std::string &line);
+     /// @brief extract the substring specifying the parameter value in the given file line
+    /// @param line line in file stream to be operated on
+    /// @return substring specifying the parameter value
+    const std::string extractValueString(std::string &line);
+    
+    /// @brief set specified parameter by autoconverting given string
+    /// @param parameterName parameter identifier in struct to be changed
+    /// @param valueString string of value that should be set, will be auto converted
+    void setParameter(std::string &parameterName, std::string &valueString);
+
 };
