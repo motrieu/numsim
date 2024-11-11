@@ -16,7 +16,7 @@ void Computation::runSimulation()
 
         computeTimeStepWidth();
 
-        if (time+dt_ > settings_.endTime - dt_/100.0)
+        if (time+dt_ > settings_.endTime - dt_/100000.0)
             dt_ = settings_.endTime - time;
 
         computePreliminaryVelocities();
@@ -44,8 +44,8 @@ void Computation::initialize(int argc, char *argv[])
     // load settings from file
     settings_.loadFromFile(filename);
 
-    const double meshWidthX = settings_.physicalSize[0]/(settings_.nCells[0]-2);
-    const double meshWidthY = settings_.physicalSize[1]/(settings_.nCells[1]-2);
+    const double meshWidthX = settings_.physicalSize[0]/(settings_.nCells[0]);
+    const double meshWidthY = settings_.physicalSize[1]/(settings_.nCells[1]);
     meshWidth_ = {meshWidthX, meshWidthY};
 
     if (settings_.useDonorCell)
@@ -61,7 +61,7 @@ void Computation::initialize(int argc, char *argv[])
         throw std::invalid_argument("Only SOR and GaussSeidel are supported as pressure solvers.");
     
     outputWriterParaview_ = std::make_unique<OutputWriterParaview>(discretization_);
-    outputWriterText_ = std::make_unique<OutputWriterText>(discretization_);
+    // outputWriterText_ = std::make_unique<OutputWriterText>(discretization_);
 
     applyBCOnBoundary();
     applyPreliminaryBCOnBoundary();
@@ -69,7 +69,7 @@ void Computation::initialize(int argc, char *argv[])
 
 void Computation::applyBCOnBoundary()
 {
-    for (int j=0; j < (*discretization_).nCells()[1]; j++)
+    for (int j=(*discretization_).uJBegin()-1; j < (*discretization_).uJEnd()+1; j++)
     {
         (*discretization_).u((*discretization_).uIBegin()-1,j) = settings_.dirichletBcLeft[0];
         (*discretization_).u((*discretization_).uIEnd(),j) = settings_.dirichletBcRight[0];
@@ -91,7 +91,7 @@ void Computation::applyBCInHaloCells()
         (*discretization_).u(i,(*discretization_).uJBegin()-1) = 2.0*settings_.dirichletBcBottom[0] - uLower;
         (*discretization_).u(i,(*discretization_).uJEnd()) = 2.0*settings_.dirichletBcTop[0] - uUpper;
     }
-    for (int j=0; j < (*discretization_).nCells()[1]; j++)
+    for (int j=(*discretization_).uJBegin()-1; j < (*discretization_).uJEnd()+1; j++)
     {
         const double vLeft = (*discretization_).v((*discretization_).vIBegin(),j);
         const double vRight = (*discretization_).v((*discretization_).vIEnd()-1,j);
@@ -120,26 +120,33 @@ void Computation::applyPreliminaryBCOnBoundary()
 
 void Computation::computeTimeStepWidth()
 {
-    const double dtDiffusive = (settings_.re/2.0) * (meshWidth_[0]*meshWidth_[0]*meshWidth_[1]*meshWidth_[1])
-                                        / (meshWidth_[0]*meshWidth_[0] + meshWidth_[1]*meshWidth_[1]);
+    const double dx = meshWidth_[0];
+    const double dy = meshWidth_[1];
+    const double dtDiffusive = (settings_.re/2.0) * (dx*dx * dy*dy) / (dx*dx + dy*dy);
     
     double uAbsMax = 0.0;
-    double vAbsMax = 0.0;
-    for (int i=0; i < (*discretization_).nCells()[0]; i++)
+    for (int i=(*discretization_).uIBegin()-1; i < (*discretization_).uIEnd()+1; i++)
     {
-        for (int j=0; j < (*discretization_).nCells()[1]; j++)
+        for (int j=(*discretization_).uJBegin()-1; j < (*discretization_).uJEnd()+1; j++)
         {
             const double uAbs = std::fabs((*discretization_).u(i,j));
-            const double vAbs = std::fabs((*discretization_).v(i,j));
             if (uAbs > uAbsMax)
                 uAbsMax = uAbs;
+        }
+    }
+    double vAbsMax = 0.0;
+    for (int i=(*discretization_).vIBegin()-1; i < (*discretization_).vIEnd()+1; i++)
+    {
+        for (int j=(*discretization_).vJBegin()-1; j < (*discretization_).vJEnd()+1; j++)
+        {
+            const double vAbs = std::fabs((*discretization_).v(i,j));
             if (vAbs > vAbsMax)
                 vAbsMax = vAbs;
         }
     }
 
-    const double dtConvectiveU = meshWidth_[0] / uAbsMax;
-    const double dtConvectiveV = meshWidth_[1] / vAbsMax;
+    const double dtConvectiveU = dx / uAbsMax;
+    const double dtConvectiveV = dy / vAbsMax;
 
     dt_ = settings_.tau * std::min({dtDiffusive, dtConvectiveU, dtConvectiveV, settings_.maximumDt});
 }
