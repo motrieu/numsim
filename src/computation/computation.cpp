@@ -12,8 +12,7 @@ void Computation::runSimulation()
 
     while (time < settings_.endTime)
     {
-        applyBCOnBoundary();
-        applyPreliminaryBCOnBoundary();
+        applyBCInHaloCells();
 
         computeTimeStepWidth();
 
@@ -63,26 +62,34 @@ void Computation::initialize(int argc, char *argv[])
     
     outputWriterParaview_ = std::make_unique<OutputWriterParaview>(discretization_);
     outputWriterText_ = std::make_unique<OutputWriterText>(discretization_);
+
+    applyBCOnBoundary();
+    applyPreliminaryBCOnBoundary();
 }
 
 void Computation::applyBCOnBoundary()
 {
-    for (int i=0; i < (*discretization_).nCells()[0]; i++)
+    for (int j=0; j < (*discretization_).nCells()[1]; j++)
+    {
+        (*discretization_).u((*discretization_).uIBegin()-1,j) = settings_.dirichletBcLeft[0];
+        (*discretization_).u((*discretization_).uIEnd(),j) = settings_.dirichletBcRight[0];
+    }
+
+    for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
+    {
+        (*discretization_).v(i,(*discretization_).vJBegin()-1) = settings_.dirichletBcBottom[1];
+        (*discretization_).v(i,(*discretization_).vJEnd()) = settings_.dirichletBcTop[1];
+    }
+}
+
+void Computation::applyBCInHaloCells()
+{
+    for (int i=(*discretization_).uIBegin(); i < (*discretization_).uIEnd(); i++)
     {
         const double uLower = (*discretization_).u(i,(*discretization_).uJBegin());
         const double uUpper = (*discretization_).u(i,(*discretization_).uJEnd()-1);
         (*discretization_).u(i,(*discretization_).uJBegin()-1) = 2.0*settings_.dirichletBcBottom[0] - uLower;
         (*discretization_).u(i,(*discretization_).uJEnd()) = 2.0*settings_.dirichletBcTop[0] - uUpper;
-    }
-    for (int i=0; i < (*discretization_).nCells()[0]; i++)
-    {
-        (*discretization_).v(i,(*discretization_).vJBegin()-1) = settings_.dirichletBcBottom[1];
-        (*discretization_).v(i,(*discretization_).vJEnd()) = settings_.dirichletBcTop[1];
-    }
-    for (int j=0; j < (*discretization_).nCells()[1]; j++)
-    {
-        (*discretization_).u((*discretization_).uIBegin()-1,j) = settings_.dirichletBcLeft[0];
-        (*discretization_).u((*discretization_).uIEnd(),j) = settings_.dirichletBcRight[0];
     }
     for (int j=0; j < (*discretization_).nCells()[1]; j++)
     {
@@ -95,14 +102,14 @@ void Computation::applyBCOnBoundary()
 
 void Computation::applyPreliminaryBCOnBoundary()
 {
-    for (int j=0; j < (*discretization_).nCells()[1]; j++)
+    for (int j=(*discretization_).uJBegin(); j < (*discretization_).uJEnd(); j++)
     {
         const double uLeft = (*discretization_).u((*discretization_).uIBegin()-1,j);
         const double uRight = (*discretization_).u((*discretization_).uIEnd(),j);
         (*discretization_).f((*discretization_).uIBegin()-1,j) = uLeft;
         (*discretization_).f((*discretization_).uIEnd(),j) = uRight;
     }
-    for (int i=0; i < (*discretization_).nCells()[0]; i++)
+    for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
     {
         const double vLower = (*discretization_).v(i,(*discretization_).vJBegin()-1);
         const double vUpper = (*discretization_).v(i,(*discretization_).vJEnd());
