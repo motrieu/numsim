@@ -107,7 +107,7 @@ void Computation::applyBCInHaloCells()
     }
 
     // sets boundary conditions for v(0,j) and v(N+1,j) based on given Dirichlet conditions and the inner cell values v(1,j), v(N,j)
-    for (int j=(*discretization_).uJBegin()-1; j < (*discretization_).uJEnd()+1; j++)
+    for (int j=(*discretization_).vJBegin()-1; j < (*discretization_).vJEnd()+1; j++)
     {
         const double vLeft = (*discretization_).v((*discretization_).vIBegin(),j);
         const double vRight = (*discretization_).v((*discretization_).vIEnd()-1,j);
