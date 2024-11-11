@@ -9,7 +9,7 @@ class Discretization : public StaggeredGrid
 public:
     
     /// @brief constructor of discretization
-    /// @param nCells two-dimensional array for number of elements in x and y direction
+    /// @param nCells two-dimensional array for number of elements in x and y direction (halo cells not included)
     /// @param meshWidth two-dimensional array for mesh width in x and y direction
     Discretization(std::array<int,2> nCells, std::array<double,2> meshWidth);
   

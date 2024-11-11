@@ -8,7 +8,7 @@ class DonorCell : public Discretization
 public:
 
     /// @brief constructor of donor cell discretization scheme
-    /// @param nCells two-dimensional array for number of elements in x and y direction
+    /// @param nCells two-dimensional array for number of elements in x and y direction (halo cells not included)
     /// @param meshWidth two-dimensional array for mesh width in x and y direction
     /// @param alpha alpha-parameter which maps between central differences and donor cell, 0=<alpha=<1, for alpha=0 the scheme is the pure central differences scheme, for alpha=1 the pure donor cell scheme
     DonorCell(std::array<int,2> nCells, std::array<double,2> meshWidth, double alpha);
@@ -38,6 +38,9 @@ public:
     virtual double computeDuvDy(int i, int j) const;
 
 private:
+    /// @brief alpha-parameter which maps between central differences and donor cell, 0<=alpha<=1
+    ///        for alpha=0 the scheme is the pure central differences scheme
+    ///        for alpha=1 the scheme is the pure donor cell scheme
     double alpha_;
 
 };

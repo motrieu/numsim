@@ -12,13 +12,14 @@ public:
     /// @param discretization shared pointer to the discretization which is either a central difference or donor cell object
     /// @param epsilon tolerance for the residuum for the iterative pressure solver
     /// @param maximumNumberOfIterations number of maximal iterations the pressure solver runs through
-    /// @param omega weight for correction term
+    /// @param omega weight for correction term, for omega=1 one receives the Gauss-Seidel algorithm
     SOR(std::shared_ptr<Discretization> discretization, double epsilon, int maximumNumberOfIterations, double omega);
 
     /// @brief implements the SOR-algorithm that solves for the new pressure p
     virtual void solve();
 
 private:
-    double omega_;
 
+    /// @brief weight for correction term, for omega=1 one receives the Gauss-Seidel algorithm
+    double omega_; 
 };

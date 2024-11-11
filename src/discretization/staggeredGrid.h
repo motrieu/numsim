@@ -8,7 +8,7 @@ class StaggeredGrid
 public:
    
     /// @brief constructor of staggered grid
-    /// @param nCells two-dimensional array for number of elements in x and y direction
+    /// @param nCells two-dimensional array for number of elements in x and y direction (halo cells not included)
     /// @param meshWidth two-dimensional array for mesh width in x and y direction
     StaggeredGrid(std::array<int,2> nCells, std::array<double,2> meshWidth);
 
@@ -97,63 +97,77 @@ public:
     double dy() const;
  
     
-    /// @brief get first valid index for u in x-direction
-    /// @return first valid index for u in x-direction
+    /// @brief get first inner index for u in x-direction
+    /// @return first inner index for u in x-direction
     int	uIBegin() const;
     
-    /// @brief get one after last valid index for u in x-direction
-    /// @return one after last valid index for u in x-direction
+    /// @brief get one after last inner index for u in x-direction
+    /// @return one after last inner index for u in x-direction
     int	uIEnd() const;
     
-    /// @brief get first valid index for u in y-direction
-    /// @return first valid index for u in y-direction
+    /// @brief get first inner index for u in y-direction
+    /// @return first inner index for u in y-direction
     int	uJBegin() const;
  
-    /// @brief get one after last valid index for u in y-direction
-    /// @return one after last valid index for u in y-direction
+    /// @brief get one after last inner index for u in y-direction
+    /// @return one after last inner index for u in y-direction
     int uJEnd() const;
     
-    /// @brief get first valid index for v in x-direction
-    /// @return first valid index for v in x-direction
+    /// @brief get first inner index for v in x-direction
+    /// @return first inner index for v in x-direction
     int	vIBegin() const;
     
-    /// @brief get one after last valid index for v in x-direction
-    /// @return one after last valid index for v in x-direction
+    /// @brief get one after last inner index for v in x-direction
+    /// @return one after last inner index for v in x-direction
     int	vIEnd() const;
     
-    /// @brief get first valid index for v in y-direction
-    /// @return first valid index for v in y-direction
+    /// @brief get first inner index for v in y-direction
+    /// @return first inner index for v in y-direction
     int	vJBegin() const;
 
-    /// @brief get one after last valid index for v in y-direction
-    /// @return one after last valid index for v in y-direction
+    /// @brief get one after last inner index for v in y-direction
+    /// @return one after last inner index for v in y-direction
     int	vJEnd() const;
     
-    /// @brief get first valid index for p in x-direction
-    /// @return first valid index for p in x-direction
+    /// @brief get first inner index for p in x-direction
+    /// @return first inner index for p in x-direction
     int	pIBegin() const;
     
-    /// @brief get one after last valid index for p in x-direction
-    /// @return one after last valid index for p in x-direction
+    /// @brief get one after last inner index for p in x-direction
+    /// @return one after last inner index for p in x-direction
     int	pIEnd() const;
 
-    /// @brief get first valid index for p in y-direction
-    /// @return first valid index for p in y-direction
+    /// @brief get first inner index for p in y-direction
+    /// @return first inner index for p in y-direction
     int	pJBegin() const;
     
-    /// @brief get one after last valid index for p in y-direction
-    /// @return one after last valid index for p in y-direction
+    /// @brief get one after last inner index for p in y-direction
+    /// @return one after last inner index for p in y-direction
     int	pJEnd() const;
 
 protected:
+    /// @brief two-dimensional array for number of elements in x and y direction (halo cells not included)
     const std::array<int,2> nCells_;
+
+    /// @brief two-dimensional array for mesh width in x and y direction
     const std::array<double,2> meshWidth_;
  
+    /// @brief stores the values of the velocity in x-direction, lives on the right face of each cell
     FieldVariable u_;
+
+    /// @brief stores the values of the velocity in y-direction, lives on the upper face of each cell
     FieldVariable v_;
+
+    /// @brief stores the values of the pressure, lives in the centre of each cell
     FieldVariable p_;
-    FieldVariable rhs_;
+
+    /// @brief stores the values of the preliminary velocity in x-direction, lives on the right face of each cell
     FieldVariable f_;
+
+    /// @brief stores the values of the preliminary velocity in y-direction, lives on the upper face of each cell
     FieldVariable g_;
+
+    /// @brief stores the values of the right hand side, lives in the centre of each cell
+    FieldVariable rhs_;
 
 };

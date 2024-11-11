@@ -25,10 +25,11 @@ void GaussSeidel::solve()
             }
         }
         
-        resNormSquared = calc2NormOfP();
+        resNormSquared = calcResNormSquared();
         n++;
 
         setBoundaryValues();
     }
+    //Termination criteria: either number of maximal iterations is reached or residual squared norm is less or equal to given threshold
     while ((n < maximumNumberOfIterations_) && (resNormSquared > numberOfValues*epsSquared));
 }

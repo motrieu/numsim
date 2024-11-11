@@ -22,12 +22,17 @@ protected:
     /// @brief sets boundary values for field variable p, the pressure value of the closest inner cell is used to set the boundary 
     void setBoundaryValues();
 
-    /// @brief calculates the 2-Norm of the pressure field
-    /// @return squared 2-Norm of p
-    const double calc2NormOfP() const;
+    /// @brief calculates squared residual norm of pressure p, is used as termination criterium
+    /// @return squared residual norm of pressure p
+    const double calcResNormSquared() const;
 
+    /// @brief shared pointer to the discretization, can either point towards the Central Difference or Donor Cell scheme
     std::shared_ptr<Discretization> discretization_;
+
+    /// @brief threshold that is used for the termination criterium in order to find out if the solver has converged
     double epsilon_;
+
+    /// @brief maximal number of iterations used as termination criterium
     int	maximumNumberOfIterations_;
 
 };
