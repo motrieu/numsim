@@ -4,12 +4,12 @@
 StaggeredGrid::StaggeredGrid(std::array<int,2> nCells, std::array<double,2> meshWidth) :
     nCells_(nCells), 
     meshWidth_(meshWidth), 
-    u_(FieldVariable(nCells, {0.0, -0.5*meshWidth[1]}, meshWidth)),
-    v_(FieldVariable(nCells, {-0.5*meshWidth[0], 0.0}, meshWidth)),
-    p_(FieldVariable(nCells, {-0.5*meshWidth[0], -0.5*meshWidth[1]}, meshWidth)),
-    rhs_(FieldVariable(nCells, {-0.5*meshWidth[0], -0.5*meshWidth[1]}, meshWidth)),
-    f_(FieldVariable(nCells, {0.0, -0.5*meshWidth[1]}, meshWidth)),
-    g_(FieldVariable(nCells, {-0.5*meshWidth[0], 0.0}, meshWidth))
+    u_(FieldVariable({nCells[0]+1, nCells[1]+2}, {0.0, -0.5*meshWidth[1]}, meshWidth)),
+    v_(FieldVariable({nCells[0]+2, nCells[1]+1}, {-0.5*meshWidth[0], 0.0}, meshWidth)),
+    p_(FieldVariable({nCells[0]+2, nCells[1]+2}, {-0.5*meshWidth[0], -0.5*meshWidth[1]}, meshWidth)),
+    f_(FieldVariable({nCells[0]+1, nCells[1]+2}, {0.0, -0.5*meshWidth[1]}, meshWidth)),
+    g_(FieldVariable({nCells[0]+2, nCells[1]+1}, {-0.5*meshWidth[0], 0.0}, meshWidth)),
+    rhs_(FieldVariable({nCells[0]+2, nCells[1]+2}, {-0.5*meshWidth[0], -0.5*meshWidth[1]}, meshWidth))
 {
 }
 
@@ -101,7 +101,7 @@ int	StaggeredGrid::uIBegin() const
  
 int	StaggeredGrid::uIEnd() const
 {
-    return nCells_[0] - 2;
+    return nCells_[0];
 }
  
 int	StaggeredGrid::uJBegin() const
@@ -111,7 +111,7 @@ int	StaggeredGrid::uJBegin() const
  
 int StaggeredGrid::uJEnd() const
 {
-    return nCells_[1] - 1;
+    return nCells_[1] + 1;
 }
 
 int	StaggeredGrid::vIBegin() const 
@@ -121,7 +121,7 @@ int	StaggeredGrid::vIBegin() const
  
 int	StaggeredGrid::vIEnd() const
 {
-    return nCells_[0] - 1;
+    return nCells_[0] + 1;
 }
  
 int	StaggeredGrid::vJBegin() const
@@ -131,7 +131,7 @@ int	StaggeredGrid::vJBegin() const
  
 int StaggeredGrid::vJEnd() const
 {
-    return nCells_[1] - 2;
+    return nCells_[1];
 }
 
 int	StaggeredGrid::pIBegin() const 
@@ -141,7 +141,7 @@ int	StaggeredGrid::pIBegin() const
  
 int	StaggeredGrid::pIEnd() const
 {
-    return nCells_[0] - 1;
+    return nCells_[0] + 1;
 }
  
 int	StaggeredGrid::pJBegin() const
@@ -151,7 +151,5 @@ int	StaggeredGrid::pJBegin() const
  
 int StaggeredGrid::pJEnd() const
 {
-    return nCells_[1] - 1;
+    return nCells_[1] + 1;
 }
-
-

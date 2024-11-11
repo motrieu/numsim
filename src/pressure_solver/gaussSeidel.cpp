@@ -8,7 +8,7 @@ void GaussSeidel::solve()
     int n = 0;
     double resNormSquared;
     const double epsSquared = epsilon_*epsilon_;
-    const double numberOfValues = ((*discretization_).nCells()[0]-2) * ((*discretization_).nCells()[1]-2);
+    const double numberOfValues = ((*discretization_).nCells()[0]) * ((*discretization_).nCells()[1]);
     
     do
     {
