@@ -73,9 +73,9 @@ void Settings::setParameter(std::string &parameterName, std::string &valueString
     else if (parameterName == "dirichletRightY")
         dirichletBcRight[1] = std::stod(valueString);
     else if (parameterName == "nCellsX")
-        nCells[0] = (int)std::stod(valueString);
+        nCells[0] = std::stod(valueString);
     else if (parameterName == "nCellsY")
-        nCells[1] = (int)std::stod(valueString);
+        nCells[1] = std::stod(valueString);
     else if (parameterName == "useDonorCell")
     {
         if (valueString == "true")
@@ -98,7 +98,7 @@ void Settings::setParameter(std::string &parameterName, std::string &valueString
     else if (parameterName == "epsilon")
         epsilon = std::stod(valueString);
     else if (parameterName == "maximumNumberOfIterations")
-        maximumNumberOfIterations = (int)std::stod(valueString);
+        maximumNumberOfIterations = std::stod(valueString);
     else
         throw std::invalid_argument("The parameter " + parameterName + " is not implemented.");
 }

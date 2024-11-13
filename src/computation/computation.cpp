@@ -18,9 +18,7 @@ void Computation::runSimulation()
         // time step width needs to be calculated each time step to ensure stability
         computeTimeStepWidth();
 
-
-        // ensures that the last time step leads exactly to the demanded end time 
-
+        // ensures that the last time step leads exactly to the demanded end time
         if (time+dt_ > settings_.endTime - dt_/100000.0)
             dt_ = settings_.endTime - time;
 
@@ -49,9 +47,9 @@ void Computation::initialize(int argc, char *argv[])
     // load settings from file
     settings_.loadFromFile(filename);
 
-   // calculates mesh width in x- and y-direction based on given parameters
-    const double meshWidthX = settings_.physicalSize[0]/(settings_.nCells[0]);
-    const double meshWidthY = settings_.physicalSize[1]/(settings_.nCells[1]);
+    // calculates mesh width in x- and y-direction based on given parameters
+    const double meshWidthX = settings_.physicalSize[0] / settings_.nCells[0];
+    const double meshWidthY = settings_.physicalSize[1] / settings_.nCells[1];
     meshWidth_ = {meshWidthX, meshWidthY};
 
     // either the Central Differences or the Donor cell scheme is used
