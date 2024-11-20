@@ -15,6 +15,7 @@ add_executable(${PROJECT_NAME}
    output_writer/output_writer.cpp
    output_writer/output_writer_paraview.cpp
    output_writer/output_writer_text.cpp
+   partitioning/partitioning.cpp
    pressure_solver/gaussSeidel.cpp
    pressure_solver/pressureSolver.cpp
    pressure_solver/sor.cpp
@@ -68,3 +69,4 @@ if(MPI_LINK_FLAGS)
   set_target_properties(${PROJECT_NAME} PROPERTIES
     LINK_FLAGS "${MPI_LINK_FLAGS}")
 endif()
+

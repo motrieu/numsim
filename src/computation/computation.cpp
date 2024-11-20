@@ -32,7 +32,7 @@ void Computation::runSimulation()
 
         time += dt_;
 
-        (*outputWriterParaview_).writeFile(time);
+        // (*outputWriterParaview_).writeFile(time);
         // (*outputWriterText_).writeFile(time);
     }
 }
@@ -66,7 +66,7 @@ void Computation::initialize(int argc, char *argv[])
     else
         throw std::invalid_argument("Only SOR and GaussSeidel are supported as pressure solvers.");
     
-    outputWriterParaview_ = std::make_unique<OutputWriterParaview>(discretization_);
+    // outputWriterParaview_ = std::make_unique<OutputWriterParaview>(discretization_);
     // outputWriterText_ = std::make_unique<OutputWriterText>(discretization_);
 
     // boundary conditions for u and v on the boundary faces only need to be set once in the beginning of the computation

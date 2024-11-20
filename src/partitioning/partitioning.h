@@ -1,9 +1,10 @@
 #pragma once
 
 #include <array>
+#include <vector>
 #include <cmath>
 #include <cassert>
-#include <mpi.h>
+//#include <mpi.h>
 
 class Partitioning
 {
@@ -11,6 +12,7 @@ public:
   //! compute partitioning, set internal variables
   void initialize(std::array<int, 2> nCellsGlobal);
 
+/*
   //! get the local number of cells in the own subdomain
   std::array<int, 2> nCellsLocal() const;
 
@@ -54,5 +56,8 @@ public:
   //! get the offset values for counting local nodes in x and y direction.
   //! (i_local,j_local) + nodeOffset = (i_global,j_global)
   //! used in OutputWriterParaviewParallel
-  std::array<int, 2> nodeOffset() const;
+  std::array<int, 2> nodeOffset() const;*/
+
+private:
+  int roundToInt(double x);
 };
