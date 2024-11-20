@@ -4,6 +4,7 @@
 #include <array>
 #include <memory>
 #include <cmath>
+#include <iostream>
 
 
 void Computation::runSimulation()
@@ -21,6 +22,10 @@ void Computation::runSimulation()
         // ensures that the last time step leads exactly to the demanded end time
         if (time+dt_ > settings_.endTime - dt_/100000.0)
             dt_ = settings_.endTime - time;
+        
+        // dt_ = 0.008;
+        
+        //std::cout << dt_ << std::endl;
 
         computePreliminaryVelocities();
         
@@ -164,6 +169,8 @@ void Computation::computeTimeStepWidth()
 
     const double dtConvectiveU = dx / uAbsMax;
     const double dtConvectiveV = dy / vAbsMax;
+
+    // std::cout << dtDiffusive << ", " << std::min(dtConvectiveU, dtConvectiveV) << std::endl;
 
     // makes sure that all stability conditions (the convective conditions and the diffusive condition) are fulfilled
     // and that the demanded maximal time step is not exceeded
