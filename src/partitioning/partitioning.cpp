@@ -4,8 +4,8 @@
 
 void Partitioning::initialize(std::array<int, 2> nCellsGlobal)
 {
-    int nPartitions = 48;
-    //MPI_Comm_size(MPI_COMM_WORLD, &nPartitions);
+    //calculates partitioning
+    MPI_Comm_size(MPI_COMM_WORLD, &numberOfRanks_);
 
     double globalRatio = static_cast<double>(nCellsGlobal[0]) / static_cast<double>(nCellsGlobal[1]);
     int numPartitionsX;
@@ -13,16 +13,16 @@ void Partitioning::initialize(std::array<int, 2> nCellsGlobal)
 
     if (globalRatio >= 1)
     {
-        numPartitionsY = std::max(1, roundToInt(std::sqrt(static_cast<double>(nPartitions) / globalRatio)));
-        numPartitionsX = nPartitions / numPartitionsY;
+        numPartitionsY = std::max(1, roundToInt(std::sqrt(static_cast<double>(numberOfRanks_) / globalRatio)));
+        numPartitionsX = numberOfRanks_ / numPartitionsY;
     }
     else
     {
-        numPartitionsX = std::max(1, roundToInt(std::sqrt(static_cast<double>(nPartitions) * globalRatio)));
-        numPartitionsY = nPartitions / numPartitionsX;
+        numPartitionsX = std::max(1, roundToInt(std::sqrt(static_cast<double>(numberOfRanks_) * globalRatio)));
+        numPartitionsY = numberOfRanks_ / numPartitionsX;
     }
 
-    assert(numPartitionsY * numPartitionsX == nPartitions);
+    assert(numPartitionsY * numPartitionsX == numberOfRanks_);
 
     int stdNumCellsPerPartitionX = roundToInt(static_cast<double>(nCellsGlobal[0]) / static_cast<double>(numPartitionsX));
     int stdNumCellsPerPartitionY = roundToInt(static_cast<double>(nCellsGlobal[1]) / static_cast<double>(numPartitionsY));
@@ -53,65 +53,104 @@ void Partitioning::initialize(std::array<int, 2> nCellsGlobal)
             numCellsPerPartitionY[numCellsPerPartitionY.size()-i] += 1;
     }
 
-    for (int i=0; i < numCellsPerPartitionX.size(); i++)
-        std::cout << numCellsPerPartitionX[i] << ", ";
-    std::cout << std::endl;
-    for (int i=0; i < numCellsPerPartitionY.size(); i++)
-        std::cout << numCellsPerPartitionY[i] << ", ";
-    std::cout << std::endl;
+    //assigning private variables
+    MPI_Comm_rank(MPI_COMM_WORLD, &ownRank_);
+
+    if (ownRank_ < numPartitionsX)
+        rankLower_ = -1;
+    else
+        rankLower_ = ownRank_ - numPartitionsX;
+    if (ownRank_ >= ((numPartitionsY-1) * numPartitionsX))
+        rankUpper_ = -1;
+    else
+        rankUpper_ = ownRank_ + numPartitionsX;
+    if ((ownRank_ % numPartitionsX) == 0)
+        rankLeft_ = -1;
+    else
+        rankLeft_ = ownRank_ - 1;
+    if ((ownRank_ % numPartitionsX) == numPartitionsX - 1)
+        rankRight_ = -1;
+    else
+        rankRight_ = ownRank_ + 1;
+
+    int partitionIndexX = ownRank_%numPartitionsX;
+    int partitionIndexY = ownRank_/numPartitionsX;
+    nCellsLocal_ = {numCellsPerPartitionX[partitionIndexX], numCellsPerPartitionY[partitionIndexY]};
+    nCellsGlobal_ = nCellsGlobal;
+
+    int nodeOffsetX = 0;
+    int nodeOffsetY = 0;
+    for (int i = 0; i < partitionIndexX; i++)
+        nodeOffsetX += numCellsPerPartitionX[i];
+    for (int j = 0; j < partitionIndexY; j++)
+        nodeOffsetY += numCellsPerPartitionY[j];
+    nodeOffset_ = {nodeOffsetX, nodeOffsetY};
 }
 
-/*std::array<int, 2> nCellsLocal() const
+std::array<int, 2> Partitioning::nCellsLocal() const
 {
+    return nCellsLocal_;
 }
 
-std::array<int, 2> nCellsGlobal() const
+std::array<int, 2> Partitioning::nCellsGlobal() const
 {
+    return nCellsGlobal_;
 }
 
-int ownRankNo() const
+int Partitioning::ownRankNo() const
 {
+    return ownRank_;
 }
 
-int nRanks() const
+int Partitioning::nRanks() const
 {
+    return numberOfRanks_;
 }
 
-bool ownPartitionContainsBottomBoundary() const
+bool Partitioning::ownPartitionContainsBottomBoundary() const
 {
+    return rankLower_ == -1;
 }
 
-bool ownPartitionContainsTopBoundary() const
+bool Partitioning::ownPartitionContainsTopBoundary() const
 {
+    return rankUpper_ == -1;
 }
 
-bool ownPartitionContainsLeftBoundary() const
+bool Partitioning::ownPartitionContainsLeftBoundary() const
 {
+    return rankLeft_ == -1;
 }
 
-bool ownPartitionContainsRightBoundary() const
+bool Partitioning::ownPartitionContainsRightBoundary() const
 {
+    return rankRight_ == -1;
 }
 
-int leftNeighbourRankNo() const
+int Partitioning::leftNeighbourRankNo() const
 {
+    return rankLeft_;
 }
 
-int rightNeighbourRankNo() const
+int Partitioning::rightNeighbourRankNo() const
 {
+    return rankRight_;
 }
 
-int topNeighbourRankNo() const
+int Partitioning::topNeighbourRankNo() const
 {
+    return rankUpper_;
 }
 
-int bottomNeighbourRankNo() const
+int Partitioning::bottomNeighbourRankNo() const
 {
+    return rankLower_;
 }
 
-std::array<int, 2> nodeOffset() const
+std::array<int, 2> Partitioning::nodeOffset() const
 {
-}*/
+    return nodeOffset_;
+}
 
 int Partitioning::roundToInt(double x)
 {
