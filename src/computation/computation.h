@@ -32,7 +32,7 @@ public:
     ///        pressure p, preliminary velocities F and G and the right hand side of the pressure Poisson problem (rhs)
     void runSimulation();
 
-private:
+protected:
 
     /// @brief applies boundary conditions of u and v on the actual boundary faces
     ///        manipulates the in the data structure stored values such that they are overwritten

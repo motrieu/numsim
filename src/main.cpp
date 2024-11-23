@@ -1,23 +1,18 @@
-#include "computation/computation.h"
-#include "partitioning/partitioning.h"
+#include "computation/computationParallel.h"
 
 #include <array>
 
 int main(int argc, char *argv[])
 {
+  MPI_Init(&argc, &argv);
 
-  std::array<int,2> nCellsGlobal{188,29};
+  ComputationParallel computationParallel = ComputationParallel();
 
-  Partitioning partitioning = Partitioning();
+  computationParallel.initialize(argc, argv);
 
-  partitioning.initialize(nCellsGlobal);
+  computationParallel.runSimulation();
 
-
-  /*Computation computation = Computation();
-
-  computation.initialize(argc, argv);
-
-  computation.runSimulation();*/
+  MPI_Finalize();
 
   return EXIT_SUCCESS;
 }

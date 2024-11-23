@@ -9,16 +9,16 @@ class ComputationParallel : public Computation
 {
 public:
     void runSimulation();
-    void initialize();
+    void initialize(int argc, char *argv[]);
 
 private:
     void applyBCOnDirichletBoundary();
     void applyPreliminaryBCOnDirichletBoundary();
     void applyBCInHaloCellsAtDirichletBoundary();
-    void applyBCInHaloCellsAtNonDirichletBoundary();
-    void applyBCOnNonDirichletBoundary();
-    void applyPreliminaryBCOnNonDirichletBoundary();
-    void computeTimeStepWidth();
+    void receiveAndSendVelocitiesFromAndToOtherProcesses();
+    void computeTimeStepWidthParallel();
+
+    
 
     Partitioning partitioning_;
-}
+};

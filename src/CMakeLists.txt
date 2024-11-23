@@ -8,6 +8,7 @@ project(numsim_parallel)
 add_executable(${PROJECT_NAME}
    main.cpp
    computation/computation.cpp
+   computation/computationParallel.cpp
    discretization/centralDifferences.cpp
    discretization/discretization.cpp
    discretization/donorCell.cpp

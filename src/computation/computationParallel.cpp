@@ -1,8 +1,12 @@
 #include "computationParallel.h"
 
 
-void ComputationParallel::runSimulation();
-void ComputationParallel::initialize()
+void ComputationParallel::runSimulation()
+{
+    receiveAndSendVelocitiesFromAndToOtherProcesses();
+    computeTimeStepWidthParallel();
+}
+void ComputationParallel::initialize(int argc, char *argv[])
 {
     assert(argc == 2);
 
@@ -18,7 +22,7 @@ void ComputationParallel::initialize()
     meshWidth_ = {meshWidthX, meshWidthY};
 
     partitioning_ = Partitioning();
-    partitioning_.initialize(settings.nCells);
+    partitioning_.initialize(settings_.nCells);
 
     // either the Central Differences or the Donor cell scheme is used
     if (settings_.useDonorCell)
@@ -37,7 +41,6 @@ void ComputationParallel::initialize()
     applyBCOnDirichletBoundary();
     applyPreliminaryBCOnDirichletBoundary();
 }
-
 
 void ComputationParallel::applyBCOnDirichletBoundary()
 {
@@ -146,8 +149,174 @@ void ComputationParallel::applyBCInHaloCellsAtDirichletBoundary()
     }    
 }
 
-void ComputationParallel::applyBCOnNonDirichletBoundary();
+void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
+{
+    std::vector<MPI_Request> sendRequests;
+    std::vector<MPI_Request> receiveLeftRequests;
+    std::vector<MPI_Request> receiveRightRequests;
+    std::vector<MPI_Request> receiveLowerRequests;
+    std::vector<MPI_Request> receiveUpperRequests;
 
-void ComputationParallel::applyBCInHaloCellsAtNonDirichletBoundary();
-void ComputationParallel::applyPreliminaryBCOnNonDirichletBoundary();
-void ComputationParallel::computeTimeStepWidth();
+    int nCellsX = (*discretization_).nCells()[0];
+    int nCellsY = (*discretization_).nCells()[1];
+
+    std::vector<double> receiveLeftUBuffer(nCellsY);
+    std::vector<double> receiveLeftVBuffer(nCellsY);
+    if (!partitioning_.ownPartitionContainsLeftBoundary())
+    {
+        std::vector<double> sendLeftUBuffer(nCellsY);
+        std::vector<double> sendLeftVBuffer(nCellsY);
+       
+        for (int j = 1; j < nCellsY+1; j++)
+        {
+            sendLeftUBuffer[j-1] = (*discretization_).u(1,j);
+            sendLeftVBuffer[j-1] = (*discretization_).v(1,j);
+        }
+        
+        sendRequests.emplace_back();
+        MPI_Isend(sendLeftUBuffer.data(), nCellsY, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
+
+        sendRequests.emplace_back();
+        MPI_Isend(sendLeftVBuffer.data(), nCellsY, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 1, MPI_COMM_WORLD, &sendRequests.back());
+
+        receiveLeftRequests.emplace_back();
+        MPI_Irecv(receiveLeftUBuffer.data(), nCellsY, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveLeftRequests.back());
+
+        receiveLeftRequests.emplace_back();
+        MPI_Irecv(receiveLeftVBuffer.data(), nCellsY, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 1, MPI_COMM_WORLD, &receiveLeftRequests.back());
+    }
+
+    std::vector<double> receiveRightUBuffer(nCellsY);
+    std::vector<double> receiveRightVBuffer(nCellsY);
+    if (!partitioning_.ownPartitionContainsRightBoundary())
+    {
+        std::vector<double> sendRightUBuffer(nCellsY);
+        std::vector<double> sendRightVBuffer(nCellsY);
+       
+        for (int j = 1; j < nCellsY+1; j++)
+        {
+            sendRightUBuffer[j-1] = (*discretization_).u(nCellsX,j);
+            sendRightVBuffer[j-1] = (*discretization_).v(nCellsX,j);
+        }
+        
+        sendRequests.emplace_back();
+        MPI_Isend(sendRightUBuffer.data(), nCellsY, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
+
+        sendRequests.emplace_back();
+        MPI_Isend(sendRightVBuffer.data(), nCellsY, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 1, MPI_COMM_WORLD, &sendRequests.back());
+
+        receiveRightRequests.emplace_back();
+        MPI_Irecv(receiveRightUBuffer.data(), nCellsY, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveRightRequests.back());
+
+        receiveRightRequests.emplace_back();
+        MPI_Irecv(receiveRightVBuffer.data(), nCellsY, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 1, MPI_COMM_WORLD, &receiveRightRequests.back());
+    }
+
+    std::vector<double> receiveLowerUBuffer(nCellsX);
+    std::vector<double> receiveLowerVBuffer(nCellsX);
+    if (!partitioning_.ownPartitionContainsBottomBoundary())
+    {
+        std::vector<double> sendLowerUBuffer(nCellsX);
+        std::vector<double> sendLowerVBuffer(nCellsX);
+       
+        for (int i = 1; i < nCellsX+1; i++)
+        {
+            sendLowerUBuffer[i-1] = (*discretization_).u(i,1);
+            sendLowerVBuffer[i-1] = (*discretization_).v(i,1);
+        }
+        
+        sendRequests.emplace_back();
+        MPI_Isend(sendLowerUBuffer.data(), nCellsX, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
+
+        sendRequests.emplace_back();
+        MPI_Isend(sendLowerVBuffer.data(), nCellsX, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 1, MPI_COMM_WORLD, &sendRequests.back());
+
+        receiveLowerRequests.emplace_back();
+        MPI_Irecv(receiveLowerUBuffer.data(), nCellsX, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveLowerRequests.back());
+
+        receiveLowerRequests.emplace_back();
+        MPI_Irecv(receiveLowerVBuffer.data(), nCellsX, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 1, MPI_COMM_WORLD, &receiveLowerRequests.back());
+    }
+
+    std::vector<double> receiveUpperUBuffer(nCellsX);
+    std::vector<double> receiveUpperVBuffer(nCellsX);
+    if (!partitioning_.ownPartitionContainsTopBoundary())
+    {
+        std::vector<double> sendUpperUBuffer(nCellsX);
+        std::vector<double> sendUpperVBuffer(nCellsX);
+       
+        for (int i = 1; i < nCellsX+1; i++)
+        {
+            sendUpperUBuffer[i-1] = (*discretization_).u(i,nCellsY);
+            sendUpperVBuffer[i-1] = (*discretization_).v(i,nCellsY);
+        }
+        
+        sendRequests.emplace_back();
+        MPI_Isend(sendUpperUBuffer.data(), nCellsX, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
+
+        sendRequests.emplace_back();
+        MPI_Isend(sendUpperVBuffer.data(), nCellsX, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 1, MPI_COMM_WORLD, &sendRequests.back());
+
+        receiveUpperRequests.emplace_back();
+        MPI_Irecv(receiveUpperUBuffer.data(), nCellsX, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveUpperRequests.back());
+
+        receiveUpperRequests.emplace_back();
+        MPI_Irecv(receiveUpperVBuffer.data(), nCellsX, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 1, MPI_COMM_WORLD, &receiveUpperRequests.back());
+    }
+
+    if (!partitioning_.ownPartitionContainsLeftBoundary())
+    {
+        MPI_Waitall(receiveLeftRequests.size(), receiveLeftRequests.data(), MPI_STATUSES_IGNORE);
+        for (int j = 1; j < nCellsY+1; j++)
+        {
+            (*discretization_).u(0,j) = receiveLeftUBuffer[j-1];
+            (*discretization_).v(0,j) = receiveLeftVBuffer[j-1];
+        }  
+    }
+
+    if (!partitioning_.ownPartitionContainsRightBoundary())
+    {
+        MPI_Waitall(receiveRightRequests.size(), receiveRightRequests.data(), MPI_STATUSES_IGNORE);
+        for (int j = 1; j < nCellsY+1; j++)
+        {
+            (*discretization_).u(nCellsX+1,j) = receiveRightUBuffer[j-1];
+            (*discretization_).v(nCellsX+1,j) = receiveRightVBuffer[j-1];
+        }  
+    }
+
+    if (!partitioning_.ownPartitionContainsBottomBoundary())
+    {
+        MPI_Waitall(receiveLowerRequests.size(), receiveLowerRequests.data(), MPI_STATUSES_IGNORE);
+        for (int i = 1; i < nCellsX+1; i++)
+        {
+            (*discretization_).u(i,0) = receiveLowerUBuffer[i-1];
+            (*discretization_).v(i,0) = receiveLowerVBuffer[i-1];
+        }  
+    }
+
+    if (!partitioning_.ownPartitionContainsTopBoundary())
+    {
+        MPI_Waitall(receiveUpperRequests.size(), receiveUpperRequests.data(), MPI_STATUSES_IGNORE);
+        for (int i = 1; i < nCellsX+1; i++)
+        {
+            (*discretization_).u(i,nCellsY+1) = receiveUpperUBuffer[i-1];
+            (*discretization_).v(i,nCellsY+1) = receiveUpperVBuffer[i-1];
+        }  
+    }
+
+    MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE);
+}
+
+void ComputationParallel::computeTimeStepWidthParallel()
+{
+    computeTimeStepWidth();
+
+    const double sendDt = dt_;
+    double receiveDt;
+    
+    MPI_Allreduce(&sendDt, &receiveDt, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+
+    dt_ = receiveDt;
+}
+
+//use offset for pressure solver checkerboard pattern

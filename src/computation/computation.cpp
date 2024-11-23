@@ -167,7 +167,8 @@ void Computation::computeTimeStepWidth()
 
     // makes sure that all stability conditions (the convective conditions and the diffusive condition) are fulfilled
     // and that the demanded maximal time step is not exceeded
-    dt_ = settings_.tau * std::min({dtDiffusive, dtConvectiveU, dtConvectiveV, settings_.maximumDt});
+    dt_ = settings_.tau * std::min({dtDiffusive, dtConvectiveU, dtConvectiveV});
+    dt_ = std::min(dt_, settings_.maximumDt);
 }
 
 void Computation::computePreliminaryVelocities()
