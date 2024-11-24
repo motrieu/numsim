@@ -2,7 +2,7 @@
 
 
 PressureSolverParallel::PressureSolverParallel(std::shared_ptr<Discretization> discretization, double epsilon, int maximumNumberOfIterations, Partitioning partitioning) :
-    discretization_(discretization), epsilon_(epsilon), maximumNumberOfIterations_(maximumNumberOfIterations), partitioning_(partitioning)
+    PressureSolver(discretization, epsilon, maximumNumberOfIterations), partitioning_(partitioning)
 {
     std::array<int,2> nodeOffset = partitioning.nodeOffset();
     startOffset_ = (nodeOffset[0]%2) != (nodeOffset[1]%2);
@@ -18,25 +18,25 @@ void PressureSolverParallel::setBoundaryValuesOnDirichletParallel()
     if (partitioning_.ownPartitionContainsLeftBoundary())
     {
         for (int j = pJBegin; j < pJEnd; j++)
-            (*discretization_).p(pIBegin-1,j) = (discretization_).p(pIBegin,j);
+            (*discretization_).p(pIBegin-1,j) = (*discretization_).p(pIBegin,j);
     }
 
     if (partitioning_.ownPartitionContainsRightBoundary())
     {
         for (int j = pJBegin; j < pJEnd; j++)
-            (*discretization_).p(pIEnd,j) = (discretization_).p(pIEnd-1,j);
+            (*discretization_).p(pIEnd,j) = (*discretization_).p(pIEnd-1,j);
     }
 
     if (partitioning_.ownPartitionContainsBottomBoundary())
     {
         for (int i = pIBegin; i < pIEnd; i++)
-            (*discretization_).p(i,pJBegin-1) = (discretization_).p(i,pJBegin);
+            (*discretization_).p(i,pJBegin-1) = (*discretization_).p(i,pJBegin);
     }
 
     if (partitioning_.ownPartitionContainsTopBoundary())
     {
         for (int i = pIBegin; i < pIEnd; i++)
-            (*discretization_).p(i,pJEnd) = (discretization_).p(i,pJEnd-1);
+            (*discretization_).p(i,pJEnd) = (*discretization_).p(i,pJEnd-1);
     }
 }
 
@@ -89,7 +89,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses()
         MPI_Irecv(receiveLeftPBuffer.data(), receiveLeftBufferLength, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveLeftRequest); 
     }
 
-    if (!partitioning_.ownPartitionContainsLowerBoundary())
+    if (!partitioning_.ownPartitionContainsBottomBoundary())
     {
         std::vector<double> sendLowerPBuffer(sendLowerBufferLength);
         int k = 0;

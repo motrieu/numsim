@@ -19,7 +19,9 @@ add_executable(${PROJECT_NAME}
    partitioning/partitioning.cpp
    pressure_solver/gaussSeidel.cpp
    pressure_solver/pressureSolver.cpp
+   pressure_solver/pressureSolverParallel.cpp
    pressure_solver/sor.cpp
+   pressure_solver/sorParallel.cpp
    settings/settings.cpp
    storage/array2d.cpp
    storage/fieldVariable.cpp

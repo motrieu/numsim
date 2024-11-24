@@ -8,6 +8,8 @@ void ComputationParallel::runSimulation()
     computePreliminaryVelocities();
     receiveAndSendPreliminaryVelocitiesFromAndToOtherProcesses();
     computeRightHandSide();
+
+    (*pressureSolverParallel_).solve();
 }
 void ComputationParallel::initialize(int argc, char *argv[])
 {
@@ -35,9 +37,9 @@ void ComputationParallel::initialize(int argc, char *argv[])
 
     // either the Gauss-Seidel or the SOR algorithm is used
     if (settings_.pressureSolver == "SOR")
-        pressureSolver_ = std::make_unique<SOR>(discretization_, settings_.epsilon, settings_.maximumNumberOfIterations, settings_.omega);
-    else if (settings_.pressureSolver == "GaussSeidel")
-        pressureSolver_ = std::make_unique<GaussSeidel>(discretization_, settings_.epsilon, settings_.maximumNumberOfIterations);
+        pressureSolverParallel_ = std::make_unique<SORParallel>(discretization_, settings_.epsilon, settings_.maximumNumberOfIterations, partitioning_, settings_.omega);
+    //else if (settings_.pressureSolver == "GaussSeidel")
+    //    pressureSolver_ = std::make_unique<GaussSeidel>(discretization_, settings_.epsilon, settings_.maximumNumberOfIterations);
     else
         throw std::invalid_argument("Only SOR and GaussSeidel are supported as pressure solvers.");
     
