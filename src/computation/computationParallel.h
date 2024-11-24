@@ -17,6 +17,9 @@ private:
     void applyBCInHaloCellsAtDirichletBoundary();
     void receiveAndSendVelocitiesFromAndToOtherProcesses();
     void computeTimeStepWidthParallel();
+    void computePreliminaryVelocities();
+    void receiveAndSendPreliminaryVelocitiesFromAndToOtherProcesses();
+    
 
     
 

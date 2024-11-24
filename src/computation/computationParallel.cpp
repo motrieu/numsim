@@ -5,6 +5,9 @@ void ComputationParallel::runSimulation()
 {
     receiveAndSendVelocitiesFromAndToOtherProcesses();
     computeTimeStepWidthParallel();
+    computePreliminaryVelocities();
+    receiveAndSendPreliminaryVelocitiesFromAndToOtherProcesses();
+    computeRightHandSide();
 }
 void ComputationParallel::initialize(int argc, char *argv[])
 {
@@ -317,6 +320,107 @@ void ComputationParallel::computeTimeStepWidthParallel()
     MPI_Allreduce(&sendDt, &receiveDt, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
 
     dt_ = receiveDt;
+}
+
+
+void ComputationParallel::computePreliminaryVelocities()
+{
+    int shiftIEnd = 0;
+    int shiftJEnd = 0;
+    if (!partitioning_.ownPartitionContainsRightBoundary())
+        shiftIEnd = 1;
+    if (!partitioning_.ownPartitionContainsTopBoundary())
+        shiftJEnd = 1;
+
+    for (int i=(*discretization_).uIBegin(); i < (*discretization_).uIEnd()+shiftIEnd; i++)
+    {
+        for (int j=(*discretization_).uJBegin(); j < (*discretization_).uJEnd()+shiftJEnd; j++)
+        {
+            (*discretization_).f(i,j) = (*discretization_).u(i,j) + dt_ * (
+                                            (1.0/settings_.re) * ((*discretization_).computeD2uDx2(i,j) + (*discretization_).computeD2uDy2(i,j))
+                                            - (*discretization_).computeDu2Dx(i,j)
+                                            - (*discretization_).computeDuvDy(i,j)
+                                            + settings_.g[0]
+                                            );
+        }
+    }
+
+    for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd()+shiftIEnd; i++)
+    {
+        for (int j=(*discretization_).vJBegin(); j < (*discretization_).vJEnd()+shiftJEnd; j++)
+        {
+            (*discretization_).g(i,j) = (*discretization_).v(i,j) + dt_ * (
+                                            (1.0/settings_.re) * ((*discretization_).computeD2vDx2(i,j) + (*discretization_).computeD2vDy2(i,j))
+                                            - (*discretization_).computeDuvDx(i,j)
+                                            - (*discretization_).computeDv2Dy(i,j)
+                                            + settings_.g[1]
+                                            );
+        }
+    }
+}
+
+
+void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProcesses()
+{
+    std::vector<MPI_Request> sendRequests;
+    MPI_Request receiveLeftRequest;
+    MPI_Request receiveLowerRequest;
+
+    int nCellsX = (*discretization_).nCells()[0];
+    int nCellsY = (*discretization_).nCells()[1];
+
+    std::vector<double> receiveLeftFBuffer(nCellsY);
+    std::vector<double> receiveLowerGBuffer(nCellsX);
+
+    if (!partitioning_.ownPartitionContainsLeftBoundary())
+    {
+        MPI_Irecv(receiveLeftFBuffer.data(), nCellsY, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveLeftRequest);
+    }
+
+    if (!partitioning_.ownPartitionContainsBottomBoundary())
+    {
+        MPI_Irecv(receiveLowerGBuffer.data(), nCellsX, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveLowerRequest);
+    }
+
+    if (!partitioning_.ownPartitionContainsRightBoundary())
+    {
+        std::vector<double> sendRightFBuffer(nCellsY);
+       
+        for (int j = 1; j < nCellsY+1; j++)
+            sendRightFBuffer[j-1] = (*discretization_).f(nCellsX,j);
+        
+        sendRequests.emplace_back();
+        MPI_Isend(sendRightFBuffer.data(), nCellsY, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
+    }
+
+     if (!partitioning_.ownPartitionContainsTopBoundary())
+    {
+        std::vector<double> sendUpperGBuffer(nCellsX);
+       
+        for (int i = 1; i < nCellsX+1; i++)
+            sendUpperGBuffer[i-1] = (*discretization_).g(i,nCellsY);
+        
+        sendRequests.emplace_back();
+        MPI_Isend(sendUpperGBuffer.data(), nCellsX, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
+    }
+
+    if (!partitioning_.ownPartitionContainsLeftBoundary())
+    {
+        MPI_Wait(&receiveLeftRequest, MPI_STATUS_IGNORE);
+
+        for (int j = 1; j < nCellsY+1; j++)
+            (*discretization_).f(0,j) = receiveLeftFBuffer[j-1];
+    }
+
+    if (!partitioning_.ownPartitionContainsBottomBoundary())
+    {
+        MPI_Wait(&receiveLowerRequest, MPI_STATUS_IGNORE);
+
+        for (int i = 1; i < nCellsX+1; i++)
+            (*discretization_).g(i,0) = receiveLowerGBuffer[i-1];
+    }
+
+    MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE);
 }
 
 //use offset for pressure solver checkerboard pattern
