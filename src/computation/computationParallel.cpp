@@ -8,9 +8,9 @@ void ComputationParallel::runSimulation()
 
     while (time < settings_.endTime)
     {
-        applyBCInHaloCellsAtDirichletBoundary();
-
         receiveAndSendVelocitiesFromAndToOtherProcesses();
+
+        applyBCInHaloCellsAtDirichletBoundary();
 
         computeTimeStepWidthParallel();
 
@@ -31,7 +31,7 @@ void ComputationParallel::runSimulation()
         time += dt_;
 
         (*outputWriterParaviewParallel_).writeFile(time);
-        (*outputWriterTextParallel_).writeFile(time);
+        //(*outputWriterTextParallel_).writeFile(time);
     }
 }
 void ComputationParallel::initialize(int argc, char *argv[])
