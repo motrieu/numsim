@@ -38,3 +38,13 @@ double Array2D::operator()(int i, int j) const
 
   return data_[index];
 }
+
+void Array2D::setToZero()
+{
+  data_.resize(size_[0] * size_[1], 0.0);
+}
+
+void* Array2D::data()
+{
+  return data_.data();
+}

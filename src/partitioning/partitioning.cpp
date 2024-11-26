@@ -1,5 +1,6 @@
 #include "partitioning.h"
 
+#include <mpi.h>
 #include <iostream>
 
 void Partitioning::initialize(std::array<int, 2> nCellsGlobal)
@@ -73,6 +74,11 @@ void Partitioning::initialize(std::array<int, 2> nCellsGlobal)
     else
         rankRight_ = ownRank_ + 1;
 
+    ownPartitionContainsBottomBoundary_ = rankLower_ == -1;
+    ownPartitionContainsTopBoundary_ = rankUpper_ == -1;
+    ownPartitionContainsLeftBoundary_ = rankLeft_ == -1;
+    ownPartitionContainsRightBoundary_ = rankRight_ == -1;
+
     int partitionIndexX = ownRank_%numPartitionsX;
     int partitionIndexY = ownRank_/numPartitionsX;
     nCellsLocal_ = {numCellsPerPartitionX[partitionIndexX], numCellsPerPartitionY[partitionIndexY]};
@@ -109,22 +115,22 @@ int Partitioning::nRanks() const
 
 bool Partitioning::ownPartitionContainsBottomBoundary() const
 {
-    return rankLower_ == -1;
+    return ownPartitionContainsBottomBoundary_;
 }
 
 bool Partitioning::ownPartitionContainsTopBoundary() const
 {
-    return rankUpper_ == -1;
+    return ownPartitionContainsTopBoundary_;
 }
 
 bool Partitioning::ownPartitionContainsLeftBoundary() const
 {
-    return rankLeft_ == -1;
+    return ownPartitionContainsLeftBoundary_;
 }
 
 bool Partitioning::ownPartitionContainsRightBoundary() const
 {
-    return rankRight_ == -1;
+    return ownPartitionContainsRightBoundary_;
 }
 
 int Partitioning::leftNeighbourRankNo() const

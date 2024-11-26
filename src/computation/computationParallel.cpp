@@ -1,15 +1,38 @@
 #include "computationParallel.h"
 
+#include <mpi.h>
 
 void ComputationParallel::runSimulation()
 {
-    receiveAndSendVelocitiesFromAndToOtherProcesses();
-    computeTimeStepWidthParallel();
-    computePreliminaryVelocities();
-    receiveAndSendPreliminaryVelocitiesFromAndToOtherProcesses();
-    computeRightHandSide();
+    double time = 0.0;
 
-    (*pressureSolverParallel_).solve();
+    while (time < settings_.endTime)
+    {
+        applyBCInHaloCellsAtDirichletBoundary();
+
+        receiveAndSendVelocitiesFromAndToOtherProcesses();
+
+        computeTimeStepWidthParallel();
+
+        // ensures that the last time step leads exactly to the demanded end time
+        if (time+dt_ > settings_.endTime - dt_/100000.0)
+            dt_ = settings_.endTime - time;
+
+        computePreliminaryVelocities();
+
+        receiveAndSendPreliminaryVelocitiesFromAndToOtherProcesses();
+
+        computeRightHandSide();
+
+        computePressure();
+
+        computeVelocities();
+
+        time += dt_;
+
+        (*outputWriterParaviewParallel_).writeFile(time);
+        (*outputWriterTextParallel_).writeFile(time);
+    }
 }
 void ComputationParallel::initialize(int argc, char *argv[])
 {
@@ -43,6 +66,9 @@ void ComputationParallel::initialize(int argc, char *argv[])
     else
         throw std::invalid_argument("Only SOR and GaussSeidel are supported as pressure solvers.");
     
+    outputWriterParaviewParallel_ = std::make_unique<OutputWriterParaviewParallel>(discretization_, partitioning_);
+    outputWriterTextParallel_ = std::make_unique<OutputWriterTextParallel>(discretization_, partitioning_);
+
     applyBCOnDirichletBoundary();
     applyPreliminaryBCOnDirichletBoundary();
 }
@@ -65,15 +91,29 @@ void ComputationParallel::applyBCOnDirichletBoundary()
 
     if (partitioning_.ownPartitionContainsBottomBoundary())
     {
+        int shiftIBeginV = 0;
+        int shiftIEndV = 0;
+        if (!partitioning_.ownPartitionContainsLeftBoundary())
+            shiftIBeginV = -1;
+        if (!partitioning_.ownPartitionContainsRightBoundary())
+            shiftIEndV = 1;
+
         // sets boundary conditions for v(i_local,0_local) based on given Dirichlet conditions
-        for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
+        for (int i=(*discretization_).vIBegin()+shiftIBeginV; i < (*discretization_).vIEnd()+shiftIEndV; i++)
             (*discretization_).v(i,(*discretization_).vJBegin()-1) = settings_.dirichletBcBottom[1];
     }
 
     if (partitioning_.ownPartitionContainsTopBoundary())
     {
+        int shiftIBeginV = 0;
+        int shiftIEndV = 0;
+        if (!partitioning_.ownPartitionContainsLeftBoundary())
+            shiftIBeginV = -1;
+        if (!partitioning_.ownPartitionContainsRightBoundary())
+            shiftIEndV = 1;
+
         // sets boundary conditions for v(i_local,N_local) based on given Dirichlet conditions
-        for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
+        for (int i=(*discretization_).vIBegin()+shiftIBeginV; i < (*discretization_).vIEnd()+shiftIEndV; i++)
             (*discretization_).v(i,(*discretization_).vJEnd()) = settings_.dirichletBcTop[1];
     }
 }
@@ -135,8 +175,15 @@ void ComputationParallel::applyBCInHaloCellsAtDirichletBoundary()
 
     if (partitioning_.ownPartitionContainsBottomBoundary())
     {
+        int shiftIBeginU = 0;
+        int shiftIEndU = 0;
+        if (!partitioning_.ownPartitionContainsLeftBoundary())
+            shiftIBeginU = -1;
+        if (!partitioning_.ownPartitionContainsRightBoundary())
+            shiftIEndU = 1;
+
         // sets boundary conditions for u(i_local,0_local) based on given Dirichlet conditions and the inner cell values u(i,1), u(i,N)
-        for (int i=(*discretization_).uIBegin(); i < (*discretization_).uIEnd(); i++)
+        for (int i=(*discretization_).uIBegin()+shiftIBeginU; i < (*discretization_).uIEnd()+shiftIEndU; i++)
         {
             const double uLower = (*discretization_).u(i,(*discretization_).uJBegin());
             (*discretization_).u(i,(*discretization_).uJBegin()-1) = 2.0*settings_.dirichletBcBottom[0] - uLower;
@@ -145,8 +192,15 @@ void ComputationParallel::applyBCInHaloCellsAtDirichletBoundary()
 
     if (partitioning_.ownPartitionContainsTopBoundary())
     {
+        int shiftIBeginU = 0;
+        int shiftIEndU = 0;
+        if (!partitioning_.ownPartitionContainsLeftBoundary())
+            shiftIBeginU = -1;
+        if (!partitioning_.ownPartitionContainsRightBoundary())
+            shiftIEndU = 1;
+
         // sets boundary conditions for u(i_local,N+1_local) based on given Dirichlet conditions and the inner cell values u(i,1), u(i,N)
-        for (int i=(*discretization_).uIBegin(); i < (*discretization_).uIEnd(); i++)
+        for (int i=(*discretization_).uIBegin()+shiftIBeginU; i < (*discretization_).uIEnd()+shiftIEndU; i++)
         {
             const double uUpper = (*discretization_).u(i,(*discretization_).uJEnd()-1);
             (*discretization_).u(i,(*discretization_).uJEnd()) = 2.0*settings_.dirichletBcTop[0] - uUpper;
@@ -327,16 +381,16 @@ void ComputationParallel::computeTimeStepWidthParallel()
 
 void ComputationParallel::computePreliminaryVelocities()
 {
-    int shiftIEnd = 0;
-    int shiftJEnd = 0;
+    int shiftIEndF = 0;
+    int shiftJEndG = 0;
     if (!partitioning_.ownPartitionContainsRightBoundary())
-        shiftIEnd = 1;
+        shiftIEndF = 1;
     if (!partitioning_.ownPartitionContainsTopBoundary())
-        shiftJEnd = 1;
+        shiftJEndG = 1;
 
-    for (int i=(*discretization_).uIBegin(); i < (*discretization_).uIEnd()+shiftIEnd; i++)
+    for (int i=(*discretization_).uIBegin(); i < (*discretization_).uIEnd()+shiftIEndF; i++)
     {
-        for (int j=(*discretization_).uJBegin(); j < (*discretization_).uJEnd()+shiftJEnd; j++)
+        for (int j=(*discretization_).uJBegin(); j < (*discretization_).uJEnd(); j++)
         {
             (*discretization_).f(i,j) = (*discretization_).u(i,j) + dt_ * (
                                             (1.0/settings_.re) * ((*discretization_).computeD2uDx2(i,j) + (*discretization_).computeD2uDy2(i,j))
@@ -347,9 +401,9 @@ void ComputationParallel::computePreliminaryVelocities()
         }
     }
 
-    for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd()+shiftIEnd; i++)
+    for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
     {
-        for (int j=(*discretization_).vJBegin(); j < (*discretization_).vJEnd()+shiftJEnd; j++)
+        for (int j=(*discretization_).vJBegin(); j < (*discretization_).vJEnd()+shiftJEndG; j++)
         {
             (*discretization_).g(i,j) = (*discretization_).v(i,j) + dt_ * (
                                             (1.0/settings_.re) * ((*discretization_).computeD2vDx2(i,j) + (*discretization_).computeD2vDy2(i,j))
@@ -425,4 +479,34 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
     MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE);
 }
 
-//use offset for pressure solver checkerboard pattern
+void ComputationParallel::computePressure()
+{
+    (*pressureSolverParallel_).solve();
+}
+
+void ComputationParallel::computeVelocities()
+{
+    int shiftIEndU = 0;
+    int shiftJEndV = 0;
+    if (!partitioning_.ownPartitionContainsRightBoundary())
+        shiftIEndU = 1;
+    if (!partitioning_.ownPartitionContainsTopBoundary())
+        shiftJEndV = 1;
+
+    for (int i=(*discretization_).uIBegin(); i < (*discretization_).uIEnd()+shiftIEndU; i++)
+    {
+        for (int j=(*discretization_).uJBegin(); j < (*discretization_).uJEnd(); j++)
+        {
+            (*discretization_).u(i,j) = (*discretization_).f(i,j) - (dt_/meshWidth_[0])
+                                            * ((*discretization_).p(i+1,j) - (*discretization_).p(i,j));
+        }
+    }
+    for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
+    {
+        for (int j=(*discretization_).vJBegin(); j < (*discretization_).vJEnd()+shiftJEndV; j++)
+        {
+            (*discretization_).v(i,j) = (*discretization_).g(i,j) - (dt_/meshWidth_[1])
+                                            * ((*discretization_).p(i,j+1) - (*discretization_).p(i,j));
+        }
+    }
+}

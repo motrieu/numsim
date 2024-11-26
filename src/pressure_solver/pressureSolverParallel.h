@@ -12,9 +12,20 @@ public:
 
 protected:
     void setBoundaryValuesOnDirichletParallel();
-    void receiveAndSendPressuresFromAndToOtherProcesses();
+    void receiveAndSendPressuresFromAndToOtherProcesses(bool leftAndLowerOffset, bool rightOffset, bool upperOffset);
     const double calcResNormSquaredParallel() const;
 
     Partitioning partitioning_;
-    bool startOffset_;
+
+    bool leftAndLowerOffset_;
+    bool rightOffset_;
+    bool upperOffset_;
+
+    const int pIBegin_;
+    const int pIEnd_;
+    const int pJBegin_;
+    const int pJEnd_;
+
+    const int nCellsX_;
+    const int nCellsY_;
 };

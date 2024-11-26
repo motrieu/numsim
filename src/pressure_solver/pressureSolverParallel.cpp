@@ -1,46 +1,47 @@
 #include "pressureSolverParallel.h"
 
+#include <mpi.h>
+
 
 PressureSolverParallel::PressureSolverParallel(std::shared_ptr<Discretization> discretization, double epsilon, int maximumNumberOfIterations, Partitioning partitioning) :
-    PressureSolver(discretization, epsilon, maximumNumberOfIterations), partitioning_(partitioning)
+    PressureSolver(discretization, epsilon, maximumNumberOfIterations), partitioning_(partitioning),
+    pIBegin_((*discretization_).pIBegin()), pIEnd_((*discretization_).pIEnd()), pJBegin_((*discretization_).pJBegin()), pJEnd_((*discretization_).pJEnd()),
+    nCellsX_((*discretization_).nCells()[0]), nCellsY_((*discretization_).nCells()[1])
 {
     std::array<int,2> nodeOffset = partitioning.nodeOffset();
-    startOffset_ = (nodeOffset[0]%2) != (nodeOffset[1]%2);
+    leftAndLowerOffset_ = (nodeOffset[0]%2) != (nodeOffset[1]%2);
+    rightOffset_ = (1+leftAndLowerOffset_+nCellsX_)%2;
+    upperOffset_ = (1+leftAndLowerOffset_+nCellsY_)%2;
 }
 
 void PressureSolverParallel::setBoundaryValuesOnDirichletParallel()
 {
-    int pIBegin = (*discretization_).pIBegin();
-    int pIEnd = (*discretization_).pIEnd();
-    int pJBegin = (*discretization_).pJBegin();
-    int pJEnd = (*discretization_).pJEnd();
-
     if (partitioning_.ownPartitionContainsLeftBoundary())
     {
-        for (int j = pJBegin; j < pJEnd; j++)
-            (*discretization_).p(pIBegin-1,j) = (*discretization_).p(pIBegin,j);
+        for (int j = pJBegin_; j < pJEnd_; j++)
+            (*discretization_).p(pIBegin_-1,j) = (*discretization_).p(pIBegin_,j);
     }
 
     if (partitioning_.ownPartitionContainsRightBoundary())
     {
-        for (int j = pJBegin; j < pJEnd; j++)
-            (*discretization_).p(pIEnd,j) = (*discretization_).p(pIEnd-1,j);
+        for (int j = pJBegin_; j < pJEnd_; j++)
+            (*discretization_).p(pIEnd_,j) = (*discretization_).p(pIEnd_-1,j);
     }
 
     if (partitioning_.ownPartitionContainsBottomBoundary())
     {
-        for (int i = pIBegin; i < pIEnd; i++)
-            (*discretization_).p(i,pJBegin-1) = (*discretization_).p(i,pJBegin);
+        for (int i = pIBegin_; i < pIEnd_; i++)
+            (*discretization_).p(i,pJBegin_-1) = (*discretization_).p(i,pJBegin_);
     }
 
     if (partitioning_.ownPartitionContainsTopBoundary())
     {
-        for (int i = pIBegin; i < pIEnd; i++)
-            (*discretization_).p(i,pJEnd) = (*discretization_).p(i,pJEnd-1);
+        for (int i = pIBegin_; i < pIEnd_; i++)
+            (*discretization_).p(i,pJEnd_) = (*discretization_).p(i,pJEnd_-1);
     }
 }
 
-void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses()
+void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool leftAndLowerOffset, bool rightOffset, bool upperOffset)
 {   
     std::vector<MPI_Request> sendRequests;
     MPI_Request receiveLeftRequest;
@@ -48,26 +49,15 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses()
     MPI_Request receiveLowerRequest;
     MPI_Request receiveUpperRequest;
 
-    int nCellsX = (*discretization_).nCells()[0];
-    int nCellsY = (*discretization_).nCells()[1];
+    int sendLeftBufferLength = (nCellsY_+1)/2 - leftAndLowerOffset*(nCellsY_%2);
+    int sendLowerBufferLength = (nCellsX_+1)/2 - leftAndLowerOffset*(nCellsX_%2);
+    int sendRightBufferLength = (nCellsY_+1)/2 - rightOffset*(nCellsY_%2);
+    int sendUpperBufferLength = (nCellsX_+1)/2 - upperOffset*(nCellsX_%2);
 
-    int pIBegin = (*discretization_).pIBegin();
-    int pIEnd = (*discretization_).pIEnd();
-    int pJBegin = (*discretization_).pJBegin();
-    int pJEnd = (*discretization_).pJEnd();
-
-    int rightOffset = (1+startOffset_+nCellsX)%2;
-    int upperOffset = (1+startOffset_+nCellsY)%2;
-
-    int sendLeftBufferLength = (nCellsY+1)/2 - startOffset_*(nCellsY%2);
-    int sendLowerBufferLength = (nCellsX+1)/2 - startOffset_*(nCellsX%2);
-    int sendRightBufferLength = (nCellsY+1)/2 - rightOffset*(nCellsY%2);
-    int sendUpperBufferLength = (nCellsX+1)/2 - upperOffset*(nCellsX%2);
-
-    int receiveLeftBufferLength = nCellsY - sendLeftBufferLength;
-    int receiveLowerBufferLength = nCellsX - sendLowerBufferLength;
-    int receiveRightBufferLength = nCellsY - sendRightBufferLength;
-    int receiveUpperBufferLength = nCellsX - sendUpperBufferLength;
+    int receiveLeftBufferLength = nCellsY_ - sendLeftBufferLength;
+    int receiveLowerBufferLength = nCellsX_ - sendLowerBufferLength;
+    int receiveRightBufferLength = nCellsY_ - sendRightBufferLength;
+    int receiveUpperBufferLength = nCellsX_ - sendUpperBufferLength;
 
     std::vector<double> receiveLeftPBuffer(receiveLeftBufferLength);
     std::vector<double> receiveLowerPBuffer(receiveLowerBufferLength);
@@ -78,9 +68,9 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses()
     {
         std::vector<double> sendLeftPBuffer(sendLeftBufferLength);
         int k = 0;
-        for (int j = pJBegin+startOffset_; j < pJEnd; j+=2)
+        for (int j = pJBegin_+leftAndLowerOffset; j < pJEnd_; j+=2)
         {
-            sendLeftPBuffer[k] = (*discretization_).p(pIBegin,j);
+            sendLeftPBuffer[k] = (*discretization_).p(pIBegin_,j);
             k++;
         }
         sendRequests.emplace_back();
@@ -93,9 +83,9 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses()
     {
         std::vector<double> sendLowerPBuffer(sendLowerBufferLength);
         int k = 0;
-        for (int i = pIBegin+startOffset_; i < pIEnd; i+=2)
+        for (int i = pIBegin_+leftAndLowerOffset; i < pIEnd_; i+=2)
         {
-            sendLowerPBuffer[k] = (*discretization_).p(i,pJBegin);
+            sendLowerPBuffer[k] = (*discretization_).p(i,pJBegin_);
             k++;
         }
         sendRequests.emplace_back();
@@ -108,9 +98,9 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses()
     {
         std::vector<double> sendRightPBuffer(sendRightBufferLength);
         int k = 0;
-        for (int j = pJBegin+rightOffset; j < pJEnd; j+=2)
+        for (int j = pJBegin_+rightOffset; j < pJEnd_; j+=2)
         {
-            sendRightPBuffer[k] = (*discretization_).p(pIEnd-1,j);
+            sendRightPBuffer[k] = (*discretization_).p(pIEnd_-1,j);
             k++;
         }
         sendRequests.emplace_back();
@@ -123,9 +113,9 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses()
     {
         std::vector<double> sendUpperPBuffer(sendUpperBufferLength);
         int k = 0;
-        for (int i = pIBegin+upperOffset; i < pIEnd; i+=2)
+        for (int i = pIBegin_+upperOffset; i < pIEnd_; i+=2)
         {
-            sendUpperPBuffer[k] = (*discretization_).p(i,pJEnd-1);
+            sendUpperPBuffer[k] = (*discretization_).p(i,pJEnd_-1);
             k++;
         }
         sendRequests.emplace_back();
@@ -138,9 +128,9 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses()
     {
         MPI_Wait(&receiveLeftRequest, MPI_STATUS_IGNORE);
         int k = 0;
-        for (int j = pJBegin+!startOffset_; j < pJEnd; j+=2)
+        for (int j = pJBegin_+!leftAndLowerOffset; j < pJEnd_; j+=2)
         {
-            (*discretization_).p(pIBegin-1,j) = receiveLeftPBuffer[k];
+            (*discretization_).p(pIBegin_-1,j) = receiveLeftPBuffer[k];
             k++;
         }
     }
@@ -149,9 +139,9 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses()
     {
         MPI_Wait(&receiveLowerRequest, MPI_STATUS_IGNORE);
         int k = 0;
-        for (int i = pIBegin+!startOffset_; i < pIEnd; i+=2)
+        for (int i = pIBegin_+!leftAndLowerOffset; i < pIEnd_; i+=2)
         {
-            (*discretization_).p(i,pJBegin-1) = receiveLowerPBuffer[k];
+            (*discretization_).p(i,pJBegin_-1) = receiveLowerPBuffer[k];
             k++;
         }
     }
@@ -160,9 +150,9 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses()
     {
         MPI_Wait(&receiveRightRequest, MPI_STATUS_IGNORE);
         int k = 0;
-        for (int j = pJBegin+!rightOffset; j < pJEnd; j+=2)
+        for (int j = pJBegin_+!rightOffset; j < pJEnd_; j+=2)
         {
-            (*discretization_).p(pJEnd,j) = receiveRightPBuffer[k];
+            (*discretization_).p(pIEnd_,j) = receiveRightPBuffer[k];
             k++;
         }
     }
@@ -171,12 +161,22 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses()
     {
         MPI_Wait(&receiveUpperRequest, MPI_STATUS_IGNORE);
         int k = 0;
-        for (int i = pIBegin+!upperOffset; i < pIEnd; i+=2)
+        for (int i = pIBegin_+!upperOffset; i < pIEnd_; i+=2)
         {
-            (*discretization_).p(i,pJEnd) = receiveUpperPBuffer[k];
+            (*discretization_).p(i,pJEnd_) = receiveUpperPBuffer[k];
             k++;
         }
     }
 
     MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE);
+}
+
+const double PressureSolverParallel::calcResNormSquaredParallel() const
+{
+    const double sendResNormSquared = calcResNormSquared();
+    double receiveResNormSquared;
+
+    MPI_Allreduce(&sendResNormSquared, &receiveResNormSquared, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+    return receiveResNormSquared;
 }

@@ -66,8 +66,13 @@ private:
 
   int rankLeft_;
   int rankRight_;
-  int rankUpper_;
   int rankLower_;
+  int rankUpper_;
+
+  bool ownPartitionContainsLeftBoundary_;
+  bool ownPartitionContainsRightBoundary_;
+  bool ownPartitionContainsBottomBoundary_;
+  bool ownPartitionContainsTopBoundary_;
 
   std::array<int,2> nCellsLocal_;
   std::array<int,2> nCellsGlobal_;
