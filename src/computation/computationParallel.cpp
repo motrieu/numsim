@@ -364,6 +364,50 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
     }
 
     MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE);
+
+
+    std::vector<MPI_Request> sendDiagonalRequests;
+    MPI_Request receiveLeftUpperDiagonalRequest;
+    MPI_Request receiveRightLowerDiagonalRequest;
+
+    double receiveLeftUpperDiagonalUBuffer;
+    double receiveRightLowerDiagonalVBuffer;
+
+    if (!partitioning_.ownPartitionContainsLeftBoundary() && !partitioning_.ownPartitionContainsTopBoundary())
+    {
+        double sendLeftUpperVBuffer = (*discretization_).v(1,nCellsY);
+        
+        sendDiagonalRequests.emplace_back();
+        MPI_Isend(sendLeftUpperVBuffer.data(), 1, MPI_DOUBLE, partitioning_.topNeighbourRankNo()-1, 0, MPI_COMM_WORLD, &sendDiagonalRequests.back());
+
+        MPI_Irecv(receiveLeftUpperDiagonalUBuffer.data(), 1, MPI_DOUBLE, partitioning_.topNeighbourRankNo()-1, 0, MPI_COMM_WORLD, &receiveLeftUpperDiagonalRequest);
+    }
+    
+    if (!partitioning_.ownPartitionContainsRightBoundary() && !partitioning_.ownPartitionContainsBottomBoundary())
+    {
+        double sendLowerRightUBuffer = (*discretization_).u(nCellsX,1);
+        
+        sendDiagonalRequests.emplace_back();
+        MPI_Isend(sendLowerRightUBuffer.data(), 1, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo()+1, 0, MPI_COMM_WORLD, &sendDiagonalRequests.back());
+
+        MPI_Irecv(receiveRightLowerDiagonalVBuffer.data(), 1, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo()+1, 0, MPI_COMM_WORLD, &receiveRightLowerDiagonalRequest);
+    }
+
+    if (!partitioning_.ownPartitionContainsLeftBoundary() && !partitioning_.ownPartitionContainsTopBoundary())
+    {
+        MPI_Wait(&receiveLeftUpperDiagonalRequest, MPI_STATUS_IGNORE);
+
+        (*discretization_).u(0,nCellsY+1) = receiveLeftUpperDiagonalUBuffer;
+    }
+
+    if (!partitioning_.ownPartitionContainsRightBoundary() && !partitioning_.ownPartitionContainsBottomBoundary())
+    {
+        MPI_Wait(&receiveRightLowerDiagonalRequest, MPI_STATUS_IGNORE);
+
+        (*discretization_).v(nCellsX+1,0) = receiveRightLowerDiagonalVBuffer;
+    }
+
+    MPI_Waitall(sendDiagonalRequests.size(), sendDiagonalRequests.data(), MPI_STATUSES_IGNORE);
 }
 
 void ComputationParallel::computeTimeStepWidthParallel()
