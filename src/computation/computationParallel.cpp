@@ -369,42 +369,65 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
     std::vector<MPI_Request> sendDiagonalRequests;
     MPI_Request receiveLeftUpperDiagonalRequest;
     MPI_Request receiveRightLowerDiagonalRequest;
+    MPI_Request receiveLeftLowerDiagonalRequest;
 
-    double receiveLeftUpperDiagonalUBuffer;
-    double receiveRightLowerDiagonalVBuffer;
+    std::vector<double> receiveLeftUpperDiagonalUBuffer(1);
+    std::vector<double> receiveRightLowerDiagonalVBuffer(1);
+    std::vector<double> receiveLeftLowerDiagonalUVBuffer(2);
 
     if (!partitioning_.ownPartitionContainsLeftBoundary() && !partitioning_.ownPartitionContainsTopBoundary())
     {
-        double sendLeftUpperVBuffer = (*discretization_).v(1,nCellsY);
+        std::vector<double> sendLeftUpperDiagonalVBuffer = {(*discretization_).v(1,nCellsY)};
         
         sendDiagonalRequests.emplace_back();
-        MPI_Isend(sendLeftUpperVBuffer.data(), 1, MPI_DOUBLE, partitioning_.topNeighbourRankNo()-1, 0, MPI_COMM_WORLD, &sendDiagonalRequests.back());
+        MPI_Isend(sendLeftUpperDiagonalVBuffer.data(), 1, MPI_DOUBLE, partitioning_.topNeighbourRankNo()-1, 0, MPI_COMM_WORLD, &sendDiagonalRequests.back());
 
         MPI_Irecv(receiveLeftUpperDiagonalUBuffer.data(), 1, MPI_DOUBLE, partitioning_.topNeighbourRankNo()-1, 0, MPI_COMM_WORLD, &receiveLeftUpperDiagonalRequest);
     }
     
     if (!partitioning_.ownPartitionContainsRightBoundary() && !partitioning_.ownPartitionContainsBottomBoundary())
     {
-        double sendLowerRightUBuffer = (*discretization_).u(nCellsX,1);
+        std::vector<double> sendLowerRightDiagonalUBuffer = {(*discretization_).u(nCellsX,1)};
         
         sendDiagonalRequests.emplace_back();
-        MPI_Isend(sendLowerRightUBuffer.data(), 1, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo()+1, 0, MPI_COMM_WORLD, &sendDiagonalRequests.back());
+        MPI_Isend(sendLowerRightDiagonalUBuffer.data(), 1, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo()+1, 0, MPI_COMM_WORLD, &sendDiagonalRequests.back());
 
         MPI_Irecv(receiveRightLowerDiagonalVBuffer.data(), 1, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo()+1, 0, MPI_COMM_WORLD, &receiveRightLowerDiagonalRequest);
+    }
+
+    if (!partitioning_.ownPartitionContainsRightBoundary() && !partitioning_.ownPartitionContainsTopBoundary())
+    {
+        std::vector<double> sendUpperRightDiagonalUVBuffer = {(*discretization_).u(nCellsX,nCellsY), (*discretization_).v(nCellsX,nCellsY)};
+        
+        sendDiagonalRequests.emplace_back();
+        MPI_Isend(sendUpperRightDiagonalUVBuffer.data(), 2, MPI_DOUBLE, partitioning_.topNeighbourRankNo()+1, 0, MPI_COMM_WORLD, &sendDiagonalRequests.back());
+    }
+
+    if (!partitioning_.ownPartitionContainsLeftBoundary() && !partitioning_.ownPartitionContainsBottomBoundary())
+    {
+        MPI_Irecv(receiveLeftLowerDiagonalUVBuffer.data(), 2, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo()-1, 0, MPI_COMM_WORLD, &receiveLeftLowerDiagonalRequest);
     }
 
     if (!partitioning_.ownPartitionContainsLeftBoundary() && !partitioning_.ownPartitionContainsTopBoundary())
     {
         MPI_Wait(&receiveLeftUpperDiagonalRequest, MPI_STATUS_IGNORE);
 
-        (*discretization_).u(0,nCellsY+1) = receiveLeftUpperDiagonalUBuffer;
+        (*discretization_).u(0,nCellsY+1) = receiveLeftUpperDiagonalUBuffer[0];
     }
 
     if (!partitioning_.ownPartitionContainsRightBoundary() && !partitioning_.ownPartitionContainsBottomBoundary())
     {
         MPI_Wait(&receiveRightLowerDiagonalRequest, MPI_STATUS_IGNORE);
 
-        (*discretization_).v(nCellsX+1,0) = receiveRightLowerDiagonalVBuffer;
+        (*discretization_).v(nCellsX+1,0) = receiveRightLowerDiagonalVBuffer[0];
+    }
+
+    if (!partitioning_.ownPartitionContainsLeftBoundary() && !partitioning_.ownPartitionContainsBottomBoundary())
+    {
+        MPI_Wait(&receiveLeftLowerDiagonalRequest, MPI_STATUS_IGNORE);
+
+        (*discretization_).u(0,0) = receiveLeftLowerDiagonalUVBuffer[0];
+        (*discretization_).v(0,0) = receiveLeftLowerDiagonalUVBuffer[1];
     }
 
     MPI_Waitall(sendDiagonalRequests.size(), sendDiagonalRequests.data(), MPI_STATUSES_IGNORE);
