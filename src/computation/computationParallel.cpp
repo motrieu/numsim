@@ -465,8 +465,7 @@ void ComputationParallel::computePreliminaryVelocities()
 void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProcesses()
 {
     std::vector<MPI_Request> sendRequests;
-    MPI_Request receiveLeftRequest;
-    MPI_Request receiveLowerRequest;
+    std::vector<MPI_Request> receiveRequests;
 
     int nCellsX = (*discretization_).nCells()[0];
     int nCellsY = (*discretization_).nCells()[1];
@@ -476,12 +475,14 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
 
     if (!partitioning_.ownPartitionContainsLeftBoundary())
     {
-        MPI_Irecv(receiveLeftFBuffer.data(), nCellsY, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveLeftRequest);
+        receiveRequests.emplace_back();
+        MPI_Irecv(receiveLeftFBuffer.data(), nCellsY, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveRequests.back());
     }
 
     if (!partitioning_.ownPartitionContainsBottomBoundary())
     {
-        MPI_Irecv(receiveLowerGBuffer.data(), nCellsX, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveLowerRequest);
+        receiveRequests.emplace_back();
+        MPI_Irecv(receiveLowerGBuffer.data(), nCellsX, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveRequests.back());
     }
 
     if (!partitioning_.ownPartitionContainsRightBoundary())
@@ -505,19 +506,18 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
         sendRequests.emplace_back();
         MPI_Isend(sendUpperGBuffer.data(), nCellsX, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
     }
+    
+
+    MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE);
 
     if (!partitioning_.ownPartitionContainsLeftBoundary())
     {
-        MPI_Wait(&receiveLeftRequest, MPI_STATUS_IGNORE);
-
         for (int j = 1; j < nCellsY+1; j++)
             (*discretization_).f(0,j) = receiveLeftFBuffer[j-1];
     }
 
     if (!partitioning_.ownPartitionContainsBottomBoundary())
     {
-        MPI_Wait(&receiveLowerRequest, MPI_STATUS_IGNORE);
-
         for (int i = 1; i < nCellsX+1; i++)
             (*discretization_).g(i,0) = receiveLowerGBuffer[i-1];
     }

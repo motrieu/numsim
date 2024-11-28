@@ -44,10 +44,7 @@ void PressureSolverParallel::setBoundaryValuesOnDirichletParallel()
 void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool leftAndLowerOffset, bool rightOffset, bool upperOffset)
 {   
     std::vector<MPI_Request> sendRequests;
-    MPI_Request receiveLeftRequest;
-    MPI_Request receiveRightRequest;
-    MPI_Request receiveLowerRequest;
-    MPI_Request receiveUpperRequest;
+    std::vector<MPI_Request> receiveRequests;
 
     int sendLeftBufferLength = (nCellsY_+1)/2 - leftAndLowerOffset*(nCellsY_%2);
     int sendLowerBufferLength = (nCellsX_+1)/2 - leftAndLowerOffset*(nCellsX_%2);
@@ -76,7 +73,8 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         sendRequests.emplace_back();
         MPI_Isend(sendLeftPBuffer.data(), sendLeftBufferLength, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
 
-        MPI_Irecv(receiveLeftPBuffer.data(), receiveLeftBufferLength, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveLeftRequest); 
+        receiveRequests.emplace_back();
+        MPI_Irecv(receiveLeftPBuffer.data(), receiveLeftBufferLength, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveRequests.back()); 
     }
 
     if (!partitioning_.ownPartitionContainsBottomBoundary())
@@ -91,7 +89,8 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         sendRequests.emplace_back();
         MPI_Isend(sendLowerPBuffer.data(), sendLowerBufferLength, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
 
-        MPI_Irecv(receiveLowerPBuffer.data(), receiveLowerBufferLength, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveLowerRequest); 
+        receiveRequests.emplace_back();
+        MPI_Irecv(receiveLowerPBuffer.data(), receiveLowerBufferLength, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveRequests.back()); 
     }
 
     if (!partitioning_.ownPartitionContainsRightBoundary())
@@ -106,7 +105,8 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         sendRequests.emplace_back();
         MPI_Isend(sendRightPBuffer.data(), sendRightBufferLength, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
 
-        MPI_Irecv(receiveRightPBuffer.data(), receiveRightBufferLength, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveRightRequest); 
+        receiveRequests.emplace_back();
+        MPI_Irecv(receiveRightPBuffer.data(), receiveRightBufferLength, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveRequests.back()); 
     }
 
     if (!partitioning_.ownPartitionContainsTopBoundary())
@@ -121,12 +121,15 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         sendRequests.emplace_back();
         MPI_Isend(sendUpperPBuffer.data(), sendUpperBufferLength, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
 
-        MPI_Irecv(receiveUpperPBuffer.data(), receiveUpperBufferLength, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveUpperRequest); 
+        receiveRequests.emplace_back();
+        MPI_Irecv(receiveUpperPBuffer.data(), receiveUpperBufferLength, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveRequests.back()); 
     }
+
+
+    MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE);
 
     if (!partitioning_.ownPartitionContainsLeftBoundary())
     {
-        MPI_Wait(&receiveLeftRequest, MPI_STATUS_IGNORE);
         int k = 0;
         for (int j = pJBegin_+!leftAndLowerOffset; j < pJEnd_; j+=2)
         {
@@ -137,7 +140,6 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
 
     if (!partitioning_.ownPartitionContainsBottomBoundary())
     {
-        MPI_Wait(&receiveLowerRequest, MPI_STATUS_IGNORE);
         int k = 0;
         for (int i = pIBegin_+!leftAndLowerOffset; i < pIEnd_; i+=2)
         {
@@ -148,7 +150,6 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
 
     if (!partitioning_.ownPartitionContainsRightBoundary())
     {
-        MPI_Wait(&receiveRightRequest, MPI_STATUS_IGNORE);
         int k = 0;
         for (int j = pJBegin_+!rightOffset; j < pJEnd_; j+=2)
         {
@@ -159,7 +160,6 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
 
     if (!partitioning_.ownPartitionContainsTopBoundary())
     {
-        MPI_Wait(&receiveUpperRequest, MPI_STATUS_IGNORE);
         int k = 0;
         for (int i = pIBegin_+!upperOffset; i < pIEnd_; i+=2)
         {
