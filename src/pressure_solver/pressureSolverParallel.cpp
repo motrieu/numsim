@@ -22,6 +22,8 @@ PressureSolverParallel::PressureSolverParallel(std::shared_ptr<Discretization> d
     receiveLowerBufferLength_ = {nCellsX_ - sendLowerBufferLength_[0], nCellsX_ - sendLowerBufferLength_[1]};
     receiveRightBufferLength_ = {nCellsY_ - sendRightBufferLength_[0], nCellsY_ - sendRightBufferLength_[1]};
     receiveUpperBufferLength_ = {nCellsX_ - sendUpperBufferLength_[0], nCellsX_ - sendUpperBufferLength_[1]};
+
+    numberOfValuesGlobal_ = partitioning_.nCellsGlobal()[0] * partitioning_.nCellsGlobal()[1];
 }
 
 void PressureSolverParallel::setBoundaryValuesOnDirichletParallel()

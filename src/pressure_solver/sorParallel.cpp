@@ -32,7 +32,7 @@ void SORParallel::solve()
         setBoundaryValuesOnDirichletParallel();
     }
     //Termination criteria: either number of maximal iterations is reached or residual squared norm is less or equal to given threshold
-    while ((n < maximumNumberOfIterations_) && (resNormSquaredParallel > numberOfValues_*epsilonSquared_));
+    while ((n < maximumNumberOfIterations_) && (resNormSquaredParallel > numberOfValuesGlobal_*epsilonSquared_));
 }
 
 void SORParallel::solveHalfStep(bool leftAndLowerOffset)

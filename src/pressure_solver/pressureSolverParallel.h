@@ -101,4 +101,5 @@ protected:
     /// @brief number of elements in y direction for this process (halo cells not included)
     int nCellsY_;
 
+    double numberOfValuesGlobal_;
 };
