@@ -9,6 +9,7 @@
 void Computation::runSimulation()
 {
     double time = 0.0;
+    double timeNextOutput = 1.0;
 
     while (time < settings_.endTime)
     {
@@ -32,8 +33,12 @@ void Computation::runSimulation()
 
         time += dt_;
 
-        (*outputWriterParaview_).writeFile(time);
-        // (*outputWriterText_).writeFile(time);
+        if (time >= timeNextOutput)
+        {
+            (*outputWriterParaview_).writeFile(time);
+            //(*outputWriterTextParallel_).writeFile(time);
+            timeNextOutput += 1.0;
+        }
     }
 }
 
