@@ -1,6 +1,7 @@
 #include "settings.h"
 #include <fstream>
 #include <iomanip>
+#include <iostream>
 
 void Settings::loadFromFile(std::string filename)
 {
@@ -20,6 +21,8 @@ void Settings::loadFromFile(std::string filename)
         // read line
         std::string line;
         getline(file, line);
+
+        std::cout << line << std::endl;
 
         // at the end of the file break for loop
         if (file.eof())

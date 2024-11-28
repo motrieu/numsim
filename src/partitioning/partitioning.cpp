@@ -5,8 +5,10 @@
 
 void Partitioning::initialize(std::array<int, 2> nCellsGlobal)
 {
-    //calculates partitioning
+    // gets number of ranks from MPI and stores it in own local variable
     MPI_Comm_size(MPI_COMM_WORLD, &numberOfRanks_);
+
+    std::cout << "numberRanks: " << numberOfRanks_ << std::endl;
 
     double globalRatio = static_cast<double>(nCellsGlobal[0]) / static_cast<double>(nCellsGlobal[1]);
     int numPartitionsX;
@@ -83,6 +85,8 @@ void Partitioning::initialize(std::array<int, 2> nCellsGlobal)
     int partitionIndexY = ownRank_/numPartitionsX;
     nCellsLocal_ = {numCellsPerPartitionX[partitionIndexX], numCellsPerPartitionY[partitionIndexY]};
     nCellsGlobal_ = nCellsGlobal;
+
+    std::cout << "ownRank: " << ownRank_ << ", nCellsX: " << nCellsLocal_[0] << ", nCellsY:" << nCellsLocal_[1] << std::endl;
 
     int nodeOffsetX = 0;
     int nodeOffsetY = 0;
