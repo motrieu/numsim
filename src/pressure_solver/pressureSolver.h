@@ -23,7 +23,7 @@ protected:
     void setBoundaryValues();
 
     /// @brief calculates squared residual norm of pressure p, is used as termination criterium
-    /// @return squared residual norm of pressure p
+    /// @return squared residual norm of pressure p in the current process
     const double calcResNormSquared() const;
 
     /// @brief shared pointer to the discretization, can either point towards the Central Difference or Donor Cell scheme
