@@ -16,9 +16,16 @@ void SORParallel::solve()
 
     do
     {
+        // solve first half of the checker board (either white or black tiles depending on position of partition in global context)
         solveHalfStep(leftAndLowerOffset_);
+
+        // comunicate calculated pressures to neighboring processes
         receiveAndSendPressuresFromAndToOtherProcesses(leftAndLowerOffset_, rightOffset_, upperOffset_);
+
+        // solve second half of the checker board (either black or whiles tiles (opposite to prior half step) depending on position of partition in global context)
         solveHalfStep(!leftAndLowerOffset_);
+
+        // comunicate calculated pressures to neighboring processes such that in the next iteration/time step everything has been updated
         receiveAndSendPressuresFromAndToOtherProcesses(!leftAndLowerOffset_, !rightOffset_, !upperOffset_);
 
         resNormSquaredParallel = calcResNormSquaredParallel();
