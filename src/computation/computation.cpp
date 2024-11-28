@@ -48,9 +48,11 @@ void Computation::initialize(int argc, char *argv[])
     settings_.loadFromFile(filename);
 
     // calculates mesh width in x- and y-direction based on given parameters
-    const double meshWidthX = settings_.physicalSize[0] / settings_.nCells[0];
-    const double meshWidthY = settings_.physicalSize[1] / settings_.nCells[1];
-    meshWidth_ = {meshWidthX, meshWidthY};
+    dx_ = settings_.physicalSize[0] / settings_.nCells[0];
+    dy_ = settings_.physicalSize[1] / settings_.nCells[1];
+    meshWidth_ = {dx_, dy_};
+    dxSquared_ = dx_ * dx_;
+    dySquared_ = dy_ * dy_;
 
     // either the Central Differences or the Donor cell scheme is used
     if (settings_.useDonorCell)
@@ -137,9 +139,7 @@ void Computation::applyPreliminaryBCOnBoundary()
 
 void Computation::computeTimeStepWidth()
 {
-    const double dx = meshWidth_[0];
-    const double dy = meshWidth_[1];
-    const double dtDiffusive = (settings_.re/2.0) * (dx*dx * dy*dy) / (dx*dx + dy*dy);
+    const double dtDiffusive = (settings_.re/2.0) * (dxSquared_ * dySquared_) / (dxSquared_ + dySquared_);
     
     double uAbsMax = 0.0;
     for (int i=(*discretization_).uIBegin()-1; i < (*discretization_).uIEnd()+1; i++)
@@ -162,8 +162,8 @@ void Computation::computeTimeStepWidth()
         }
     }
 
-    const double dtConvectiveU = dx / uAbsMax;
-    const double dtConvectiveV = dy / vAbsMax;
+    const double dtConvectiveU = dx_ / uAbsMax;
+    const double dtConvectiveV = dy_ / vAbsMax;
 
     // makes sure that all stability conditions (the convective conditions and the diffusive condition) are fulfilled
     // and that the demanded maximal time step is not exceeded
@@ -205,8 +205,8 @@ void Computation::computeRightHandSide()
     {
         for (int j=(*discretization_).pJBegin(); j < (*discretization_).pJEnd(); j++)
         {
-            const double fDiffQuotient = ((*discretization_).f(i,j) - (*discretization_).f(i-1,j)) / meshWidth_[0];
-            const double gDiffQuotient = ((*discretization_).g(i,j) - (*discretization_).g(i,j-1)) / meshWidth_[1];
+            const double fDiffQuotient = ((*discretization_).f(i,j) - (*discretization_).f(i-1,j)) / dx_;
+            const double gDiffQuotient = ((*discretization_).g(i,j) - (*discretization_).g(i,j-1)) / dy_;
             (*discretization_).rhs(i,j) = (1.0/dt_) * (fDiffQuotient + gDiffQuotient);
         }
     }
@@ -223,7 +223,7 @@ void Computation::computeVelocities()
     {
         for (int j=(*discretization_).uJBegin(); j < (*discretization_).uJEnd(); j++)
         {
-            (*discretization_).u(i,j) = (*discretization_).f(i,j) - (dt_/meshWidth_[0])
+            (*discretization_).u(i,j) = (*discretization_).f(i,j) - (dt_/dx_)
                                             * ((*discretization_).p(i+1,j) - (*discretization_).p(i,j));
         }
     }
@@ -231,7 +231,7 @@ void Computation::computeVelocities()
     {
         for (int j=(*discretization_).vJBegin(); j < (*discretization_).vJEnd(); j++)
         {
-            (*discretization_).v(i,j) = (*discretization_).g(i,j) - (dt_/meshWidth_[1])
+            (*discretization_).v(i,j) = (*discretization_).g(i,j) - (dt_/dy_)
                                             * ((*discretization_).p(i,j+1) - (*discretization_).p(i,j));
         }
     }

@@ -9,9 +9,19 @@ PressureSolverParallel::PressureSolverParallel(std::shared_ptr<Discretization> d
     nCellsX_((*discretization_).nCells()[0]), nCellsY_((*discretization_).nCells()[1])
 {
     std::array<int,2> nodeOffset = partitioning.nodeOffset();
-    leftAndLowerOffset_ = (nodeOffset[0]%2) != (nodeOffset[1]%2);
-    rightOffset_ = (1+leftAndLowerOffset_+nCellsX_)%2;
-    upperOffset_ = (1+leftAndLowerOffset_+nCellsY_)%2;
+    leftAndLowerOffset_ = {(nodeOffset[0]%2) != (nodeOffset[1]%2), (nodeOffset[0]%2) == (nodeOffset[1]%2)};
+    rightOffset_ = {(1+leftAndLowerOffset_[0]+nCellsX_)%2, (1+leftAndLowerOffset_[1]+nCellsX_)%2};
+    upperOffset_ = {(1+leftAndLowerOffset_[0]+nCellsY_)%2, (1+leftAndLowerOffset_[1]+nCellsY_)%2};
+
+    sendLeftBufferLength_ = {(nCellsY_+1)/2 - leftAndLowerOffset_[0]*(nCellsY_%2), (nCellsY_+1)/2 - leftAndLowerOffset_[1]*(nCellsY_%2)};
+    sendLowerBufferLength_ = {(nCellsX_+1)/2 - leftAndLowerOffset_[0]*(nCellsX_%2), (nCellsX_+1)/2 - leftAndLowerOffset_[1]*(nCellsX_%2)};
+    sendRightBufferLength_ = {(nCellsY_+1)/2 - rightOffset_[0]*(nCellsY_%2), (nCellsY_+1)/2 - rightOffset_[1]*(nCellsY_%2)};
+    sendUpperBufferLength_ = {(nCellsX_+1)/2 - upperOffset_[0]*(nCellsX_%2), (nCellsX_+1)/2 - upperOffset_[1]*(nCellsX_%2)};
+
+    receiveLeftBufferLength_ = {nCellsY_ - sendLeftBufferLength_[0], nCellsY_ - sendLeftBufferLength_[1]};
+    receiveLowerBufferLength_ = {nCellsX_ - sendLowerBufferLength_[0], nCellsX_ - sendLowerBufferLength_[1]};
+    receiveRightBufferLength_ = {nCellsY_ - sendRightBufferLength_[0], nCellsY_ - sendRightBufferLength_[1]};
+    receiveUpperBufferLength_ = {nCellsX_ - sendUpperBufferLength_[0], nCellsX_ - sendUpperBufferLength_[1]};
 }
 
 void PressureSolverParallel::setBoundaryValuesOnDirichletParallel()
@@ -41,7 +51,7 @@ void PressureSolverParallel::setBoundaryValuesOnDirichletParallel()
     }
 }
 
-void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool leftAndLowerOffset, bool rightOffset, bool upperOffset)
+void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool secondHalfStep)
 {   
     std::vector<MPI_Request> sendRequests;
     MPI_Request receiveLeftRequest;
@@ -49,86 +59,76 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
     MPI_Request receiveLowerRequest;
     MPI_Request receiveUpperRequest;
 
-    int sendLeftBufferLength = (nCellsY_+1)/2 - leftAndLowerOffset*(nCellsY_%2);
-    int sendLowerBufferLength = (nCellsX_+1)/2 - leftAndLowerOffset*(nCellsX_%2);
-    int sendRightBufferLength = (nCellsY_+1)/2 - rightOffset*(nCellsY_%2);
-    int sendUpperBufferLength = (nCellsX_+1)/2 - upperOffset*(nCellsX_%2);
-
-    int receiveLeftBufferLength = nCellsY_ - sendLeftBufferLength;
-    int receiveLowerBufferLength = nCellsX_ - sendLowerBufferLength;
-    int receiveRightBufferLength = nCellsY_ - sendRightBufferLength;
-    int receiveUpperBufferLength = nCellsX_ - sendUpperBufferLength;
-
-    std::vector<double> receiveLeftPBuffer(receiveLeftBufferLength);
-    std::vector<double> receiveLowerPBuffer(receiveLowerBufferLength);
-    std::vector<double> receiveRightPBuffer(receiveRightBufferLength);
-    std::vector<double> receiveUpperPBuffer(receiveUpperBufferLength);
+    std::vector<double> receiveLeftPBuffer(receiveLeftBufferLength_[secondHalfStep]);
+    std::vector<double> receiveLowerPBuffer(receiveLowerBufferLength_[secondHalfStep]);
+    std::vector<double> receiveRightPBuffer(receiveRightBufferLength_[secondHalfStep]);
+    std::vector<double> receiveUpperPBuffer(receiveUpperBufferLength_[secondHalfStep]);
 
     if (!partitioning_.ownPartitionContainsLeftBoundary())
     {
-        std::vector<double> sendLeftPBuffer(sendLeftBufferLength);
+        std::vector<double> sendLeftPBuffer(sendLeftBufferLength_[secondHalfStep]);
         int k = 0;
-        for (int j = pJBegin_+leftAndLowerOffset; j < pJEnd_; j+=2)
+        for (int j = pJBegin_+leftAndLowerOffset_[secondHalfStep]; j < pJEnd_; j+=2)
         {
             sendLeftPBuffer[k] = (*discretization_).p(pIBegin_,j);
             k++;
         }
         sendRequests.emplace_back();
-        MPI_Isend(sendLeftPBuffer.data(), sendLeftBufferLength, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
+        MPI_Isend(sendLeftPBuffer.data(), sendLeftBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
 
-        MPI_Irecv(receiveLeftPBuffer.data(), receiveLeftBufferLength, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveLeftRequest); 
+        MPI_Irecv(receiveLeftPBuffer.data(), receiveLeftBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveLeftRequest); 
     }
 
     if (!partitioning_.ownPartitionContainsBottomBoundary())
     {
-        std::vector<double> sendLowerPBuffer(sendLowerBufferLength);
+        std::vector<double> sendLowerPBuffer(sendLowerBufferLength_[secondHalfStep]);
         int k = 0;
-        for (int i = pIBegin_+leftAndLowerOffset; i < pIEnd_; i+=2)
+        for (int i = pIBegin_+leftAndLowerOffset_[secondHalfStep]; i < pIEnd_; i+=2)
         {
             sendLowerPBuffer[k] = (*discretization_).p(i,pJBegin_);
             k++;
         }
         sendRequests.emplace_back();
-        MPI_Isend(sendLowerPBuffer.data(), sendLowerBufferLength, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
+        MPI_Isend(sendLowerPBuffer.data(), sendLowerBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
 
-        MPI_Irecv(receiveLowerPBuffer.data(), receiveLowerBufferLength, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveLowerRequest); 
+        MPI_Irecv(receiveLowerPBuffer.data(), receiveLowerBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveLowerRequest); 
     }
 
     if (!partitioning_.ownPartitionContainsRightBoundary())
     {
-        std::vector<double> sendRightPBuffer(sendRightBufferLength);
+        std::vector<double> sendRightPBuffer(sendRightBufferLength_[secondHalfStep]);
         int k = 0;
-        for (int j = pJBegin_+rightOffset; j < pJEnd_; j+=2)
+        for (int j = pJBegin_+rightOffset_[secondHalfStep]; j < pJEnd_; j+=2)
         {
             sendRightPBuffer[k] = (*discretization_).p(pIEnd_-1,j);
             k++;
         }
         sendRequests.emplace_back();
-        MPI_Isend(sendRightPBuffer.data(), sendRightBufferLength, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
+        MPI_Isend(sendRightPBuffer.data(), sendRightBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
 
-        MPI_Irecv(receiveRightPBuffer.data(), receiveRightBufferLength, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveRightRequest); 
+        MPI_Irecv(receiveRightPBuffer.data(), receiveRightBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveRightRequest); 
     }
 
     if (!partitioning_.ownPartitionContainsTopBoundary())
     {
-        std::vector<double> sendUpperPBuffer(sendUpperBufferLength);
+        std::vector<double> sendUpperPBuffer(sendUpperBufferLength_[secondHalfStep]);
         int k = 0;
-        for (int i = pIBegin_+upperOffset; i < pIEnd_; i+=2)
+        for (int i = pIBegin_+upperOffset_[secondHalfStep]; i < pIEnd_; i+=2)
         {
             sendUpperPBuffer[k] = (*discretization_).p(i,pJEnd_-1);
             k++;
         }
         sendRequests.emplace_back();
-        MPI_Isend(sendUpperPBuffer.data(), sendUpperBufferLength, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
+        MPI_Isend(sendUpperPBuffer.data(), sendUpperBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
 
-        MPI_Irecv(receiveUpperPBuffer.data(), receiveUpperBufferLength, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveUpperRequest); 
+        MPI_Irecv(receiveUpperPBuffer.data(), receiveUpperBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveUpperRequest); 
     }
 
     if (!partitioning_.ownPartitionContainsLeftBoundary())
     {
         MPI_Wait(&receiveLeftRequest, MPI_STATUS_IGNORE);
         int k = 0;
-        for (int j = pJBegin_+!leftAndLowerOffset; j < pJEnd_; j+=2)
+        for (int j = pJBegin_+!leftAndLowerOffset_[secondHalfStep]; j < pJEnd_; j+=2)
         {
             (*discretization_).p(pIBegin_-1,j) = receiveLeftPBuffer[k];
             k++;
@@ -139,7 +139,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
     {
         MPI_Wait(&receiveLowerRequest, MPI_STATUS_IGNORE);
         int k = 0;
-        for (int i = pIBegin_+!leftAndLowerOffset; i < pIEnd_; i+=2)
+        for (int i = pIBegin_+!leftAndLowerOffset_[secondHalfStep]; i < pIEnd_; i+=2)
         {
             (*discretization_).p(i,pJBegin_-1) = receiveLowerPBuffer[k];
             k++;
@@ -150,7 +150,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
     {
         MPI_Wait(&receiveRightRequest, MPI_STATUS_IGNORE);
         int k = 0;
-        for (int j = pJBegin_+!rightOffset; j < pJEnd_; j+=2)
+        for (int j = pJBegin_+!rightOffset_[secondHalfStep]; j < pJEnd_; j+=2)
         {
             (*discretization_).p(pIEnd_,j) = receiveRightPBuffer[k];
             k++;
@@ -161,7 +161,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
     {
         MPI_Wait(&receiveUpperRequest, MPI_STATUS_IGNORE);
         int k = 0;
-        for (int i = pIBegin_+!upperOffset; i < pIEnd_; i+=2)
+        for (int i = pIBegin_+!upperOffset_[secondHalfStep]; i < pIEnd_; i+=2)
         {
             (*discretization_).p(i,pJEnd_) = receiveUpperPBuffer[k];
             k++;

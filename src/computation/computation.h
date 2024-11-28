@@ -70,6 +70,7 @@ protected:
     ///        manipulates the in the data structure stored values such that they are overwritten
     void computeVelocities();
 
+
     /// @brief contains parameters used for the current scenario
     Settings settings_;
  
@@ -84,6 +85,7 @@ protected:
     
     /// @brief unique pointer to the output writer which produces readable txt-files
     std::unique_ptr<OutputWriterText> outputWriterText_;
+
     
     /// @brief array of doubles that contains the mesh width in x- and y-direction
     std::array<double,2> meshWidth_;
@@ -91,4 +93,15 @@ protected:
     /// @brief current time step width, is set in each time iteration
     double dt_;
 
+    /// @brief mesh width in x-direction
+    double dx_;
+
+    /// @brief squared mesh width in x-direction
+    double dxSquared_;
+
+    /// @brief mesh width in y-direction
+    double dy_;
+
+    /// @brief squared mesh width in y-direction
+    double dySquared_;
 };

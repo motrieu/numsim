@@ -33,4 +33,10 @@ private:
     std::unique_ptr<OutputWriterTextParallel> outputWriterTextParallel_;
 
     Partitioning partitioning_;
+
+    /// @brief number of elements in x direction for this process (halo cells not included)
+    int nCellsX_;
+
+    /// @brief number of elements in y direction for this process (halo cells not included)
+    int nCellsY_;
 };

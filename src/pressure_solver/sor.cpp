@@ -7,13 +7,8 @@ SOR::SOR(std::shared_ptr<Discretization> discretization, double epsilon, int max
 
 void SOR::solve()
 {
-    const double dx = (*discretization_).dx();
-    const double dy = (*discretization_).dy();
-
     int n = 0;
     double resNormSquared;
-    const double epsSquared = epsilon_*epsilon_;
-    const double numberOfValues = ((*discretization_).nCells()[0]) * ((*discretization_).nCells()[1]);
 
     do
     {
@@ -21,9 +16,9 @@ void SOR::solve()
         {
             for (int j=(*discretization_).pJBegin(); j < (*discretization_).pJEnd(); j++)
             {
-                const double prefactor = (dx*dx*dy*dy) / (2.0*(dx*dx+dy*dy));
-                const double firstSummand = ((*discretization_).p(i-1,j) + (*discretization_).p(i+1,j)) / (dx*dx);
-                const double secondSummand = ((*discretization_).p(i,j-1) + (*discretization_).p(i,j+1)) / (dy*dy);
+                const double prefactor = (dxSquared_ * dySquared_) / (2.0*(dxSquared_ + dySquared_));
+                const double firstSummand = ((*discretization_).p(i-1,j) + (*discretization_).p(i+1,j)) / dxSquared_;
+                const double secondSummand = ((*discretization_).p(i,j-1) + (*discretization_).p(i,j+1)) / dySquared_;
                 const double rhs = (*discretization_).rhs(i,j);
                 const double p = (*discretization_).p(i,j);
 
@@ -37,5 +32,5 @@ void SOR::solve()
         setBoundaryValues();
     }
     //Termination criteria: either number of maximal iterations is reached or residual squared norm is less or equal to given threshold
-    while ((n < maximumNumberOfIterations_) && (resNormSquared > numberOfValues*epsSquared));
+    while ((n < maximumNumberOfIterations_) && (resNormSquared > numberOfValues_*epsilonSquared_));
 }
