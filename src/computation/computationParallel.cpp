@@ -11,6 +11,13 @@ void ComputationParallel::runSimulation()
     {
         receiveAndSendVelocitiesFromAndToOtherProcesses();
 
+        if (time >= timeNextOutput)
+        {
+            (*outputWriterParaviewParallel_).writeFile(time);
+            //(*outputWriterTextParallel_).writeFile(time);
+            timeNextOutput += 1.0;
+        }
+
         applyBCInHaloCellsAtDirichletBoundary();
 
         computeTimeStepWidthParallel();
@@ -30,17 +37,10 @@ void ComputationParallel::runSimulation()
         computeVelocities();
 
         time += dt_;
-
-        if (time >= timeNextOutput)
-        {
-            (*outputWriterParaviewParallel_).writeFile(time);
-            //(*outputWriterTextParallel_).writeFile(time);
-            timeNextOutput += 1.0;
-        }
     }
     
-    //receiveAndSendVelocitiesFromAndToOtherProcesses();
-    //(*outputWriterParaviewParallel_).writeFile(time);
+    receiveAndSendVelocitiesFromAndToOtherProcesses();
+    (*outputWriterParaviewParallel_).writeFile(time);
 }
 void ComputationParallel::initialize(int argc, char *argv[])
 {
