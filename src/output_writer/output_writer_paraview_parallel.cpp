@@ -40,16 +40,18 @@ void OutputWriterParaviewParallel::gatherData()
 
   // determine data range {0,…,iEnd-1} x {0,…,jEnd-1}
   std::array<int,2> nCells = discretization_->nCells();
-  int jEnd = nCells[1];
-  int iEnd = nCells[0];
+  int jBegin = 1;
+  int jEnd = nCells[1]+1;
+  int iBegin = 1;
+  int iEnd = nCells[0]+1;
 
-  // add right-most points at ranks with right boundary
-  if (partitioning_.ownPartitionContainsRightBoundary())
-    iEnd += 1;
+  // add left-most points at ranks with left boundary
+  if (partitioning_.ownPartitionContainsLeftBoundary())
+    iBegin = 0;
 
-  // add right-most points at ranks with top boundary
-  if (partitioning_.ownPartitionContainsTopBoundary())
-    jEnd += 1;
+  // add lowest points at ranks with bottom boundary
+  if (partitioning_.ownPartitionContainsBottomBoundary())
+    jBegin = 0;
 
   std::array<int,2> nodeOffset = partitioning_.nodeOffset();
 
@@ -57,9 +59,9 @@ void OutputWriterParaviewParallel::gatherData()
   v_.setToZero();
   p_.setToZero();
 
-  for (int j = 0; j < jEnd; j++)
+  for (int j = jBegin; j < jEnd; j++)
   {
-    for (int i = 0; i < iEnd; i++)
+    for (int i = iBegin; i < iEnd; i++)
     {
       const double x = i*dx;
       const double y = j*dy;
