@@ -16,11 +16,21 @@ void Partitioning::initialize(std::array<int, 2> nCellsGlobal)
     {
         numPartitionsY = std::max(1, roundToInt(std::sqrt(static_cast<double>(numberOfRanks_) / globalRatio)));
         numPartitionsX = numberOfRanks_ / numPartitionsY;
+        while (numPartitionsX*numPartitionsY != numberOfRanks_)
+        {
+            numPartitionsY -= 1;
+            numPartitionsX = numberOfRanks_ / numPartitionsY;
+        }
     }
     else
     {
         numPartitionsX = std::max(1, roundToInt(std::sqrt(static_cast<double>(numberOfRanks_) * globalRatio)));
         numPartitionsY = numberOfRanks_ / numPartitionsX;
+        while (numPartitionsX*numPartitionsY != numberOfRanks_)
+        {
+            numPartitionsX -= 1;
+            numPartitionsY = numberOfRanks_ / numPartitionsX;
+        }
     }
 
     assert(numPartitionsY * numPartitionsX == numberOfRanks_);
