@@ -232,7 +232,7 @@ void ComputationParallel::receiveAndSendDiagonalPressureFromAndToOtherProcess()
 
     if ((!partitioning_.ownPartitionContainsLeftBoundary()) && (!partitioning_.ownPartitionContainsBottomBoundary()))
     {
-        std::vector<double> sendLeftLowerDiagonalPBuffer = {(*discretization_).p(0,0)};
+        std::vector<double> sendLeftLowerDiagonalPBuffer = {(*discretization_).p(1,1)};
 
         sendLeftLowerDiagonalRequest.emplace_back();
         MPI_Isend(sendLeftLowerDiagonalPBuffer.data(), 1, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo()-1, 0, MPI_COMM_WORLD, &sendLeftLowerDiagonalRequest.back());
