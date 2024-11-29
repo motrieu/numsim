@@ -5,7 +5,8 @@
 void ComputationParallel::runSimulation()
 {
     double time = 0.0;
-    double timeNextOutput = 1.0;
+    const double outputIntervall = 1.0;
+    double timeNextOutput = outputIntervall;
 
     while (time < settings_.endTime)
     {
@@ -13,9 +14,11 @@ void ComputationParallel::runSimulation()
 
         if (time >= timeNextOutput)
         {
+            receiveAndSendDiagonalPressureFromAndToOtherProcess();
+
             (*outputWriterParaviewParallel_).writeFile(time);
             //(*outputWriterTextParallel_).writeFile(time);
-            timeNextOutput += 1.0;
+            timeNextOutput += outputIntervall;
         }
 
         applyBCInHaloCellsAtDirichletBoundary();
@@ -40,6 +43,7 @@ void ComputationParallel::runSimulation()
     }
     
     receiveAndSendVelocitiesFromAndToOtherProcesses();
+    receiveAndSendDiagonalPressureFromAndToOtherProcess();
     (*outputWriterParaviewParallel_).writeFile(time);
 }
 void ComputationParallel::initialize(int argc, char *argv[])
@@ -219,6 +223,36 @@ void ComputationParallel::applyBCInHaloCellsAtDirichletBoundary()
             (*discretization_).u(i,(*discretization_).uJEnd()) = 2.0*settings_.dirichletBcTop[0] - uUpper;
         }
     }    
+}
+
+void ComputationParallel::receiveAndSendDiagonalPressureFromAndToOtherProcess()
+{
+    std::vector<MPI_Request> sendLeftLowerDiagonalRequest;
+    MPI_Request receiveRightUpperDiagonalRequest;
+
+    if ((!partitioning_.ownPartitionContainsLeftBoundary()) && (!partitioning_.ownPartitionContainsBottomBoundary()))
+    {
+        std::vector<double> sendLeftLowerDiagonalPBuffer = {(*discretization_).p(0,0)};
+
+        sendLeftLowerDiagonalRequest.emplace_back();
+        MPI_Isend(sendLeftLowerDiagonalPBuffer.data(), 1, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo()-1, 0, MPI_COMM_WORLD, &sendLeftLowerDiagonalRequest.back());
+    }
+
+    std::vector<double> receiveRightUpperDiagonalPBuffer(1);
+    if ((!partitioning_.ownPartitionContainsRightBoundary()) && (!partitioning_.ownPartitionContainsTopBoundary()))
+    {
+        MPI_Irecv(receiveRightUpperDiagonalPBuffer.data(), 1, MPI_DOUBLE, partitioning_.topNeighbourRankNo()+1, 0, MPI_COMM_WORLD, &receiveRightUpperDiagonalRequest);
+    }
+
+
+    if ((!partitioning_.ownPartitionContainsRightBoundary()) && (!partitioning_.ownPartitionContainsTopBoundary()))
+    {
+        MPI_Wait(&receiveRightUpperDiagonalRequest, MPI_STATUS_IGNORE);
+
+        (*discretization_).p(nCellsX_+1,nCellsY_+1) = receiveRightUpperDiagonalPBuffer[0];
+    }
+
+    MPI_Waitall(sendLeftLowerDiagonalRequest.size(), sendLeftLowerDiagonalRequest.data(), MPI_STATUSES_IGNORE);
 }
 
 void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
