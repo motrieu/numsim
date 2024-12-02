@@ -161,7 +161,16 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
 
     if (!partitioning_.ownPartitionContainsTopBoundary())
     {
-        MPI_Wait(&receiveUpperRequest, MPI_STATUS_IGNORE);
+        MPI_Status statuses[sendRequests.size()];
+        MPI_Wait(&receiveUpperRequest, statuses);
+        
+        for (int v = 0; v < sendRequests.size(); v++)
+        {
+            if (statuses[v].MPI_ERROR != MPI_SUCCESS)
+            {
+                std::cout << "Error in " << v << std::endl;
+            }
+        }
         int k = 0;
         for (int i = pIBegin_+!upperOffset_[secondHalfStep]; i < pIEnd_; i+=2)
         {
@@ -170,7 +179,9 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         }
     }
 
-    MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE);
+    
+    MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUS_IGNORE);
+
 }
 
 const double PressureSolverParallel::calcResNormSquaredParallel() const
