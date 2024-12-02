@@ -2,6 +2,8 @@
 
 #include <mpi.h>
 
+#include <iostream>
+
 
 PressureSolverParallel::PressureSolverParallel(std::shared_ptr<Discretization> discretization, double epsilon, int maximumNumberOfIterations, Partitioning partitioning) :
     PressureSolver(discretization, epsilon, maximumNumberOfIterations), partitioning_(partitioning),
@@ -126,9 +128,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         MPI_Irecv(receiveUpperPBuffer.data(), receiveUpperBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveUpperRequest); 
     }
 
-
     MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE);
-
     if (!partitioning_.ownPartitionContainsLeftBoundary())
     {
         MPI_Wait(&receiveLeftRequest, MPI_STATUS_IGNORE);
@@ -142,10 +142,14 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
 
     if (!partitioning_.ownPartitionContainsBottomBoundary())
     {
-        MPI_Wait(&receiveLowerRequest, MPI_STATUS_IGNORE);
+        MPI_Status recv_status;
+        MPI_Wait(&receiveLowerRequest, &recv_status);
+        if (recv_status.MPI_ERROR != MPI_SUCCESS)
+            std::cout << "send error: " << recv_status.MPI_ERROR << "in " << partitioning_.ownRankNo() << std::endl;
         int k = 0;
         for (int i = pIBegin_+!leftAndLowerOffset_[secondHalfStep]; i < pIEnd_; i+=2)
         {
+            std::cout << receiveLowerPBuffer.at(k) << std::endl;
             (*discretization_).p(i,pJBegin_-1) = receiveLowerPBuffer.at(k);
             k++;
         }
