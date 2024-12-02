@@ -23,7 +23,7 @@ void ComputationParallel::runSimulation()
         computeTimeStepWidthParallel();
 
         // ensures that the last time step leads exactly to the demanded end time
-        if (time+dt_ > settings_.endTime - dt_/100000.0)
+        if (time + dt_ > settings_.endTime - dt_ / 100000.0)
             dt_ = settings_.endTime - time;
 
         computePreliminaryVelocities();
@@ -38,7 +38,7 @@ void ComputationParallel::runSimulation()
 
         time += dt_;
     }
-    
+
     receiveAndSendVelocitiesFromAndToOtherProcesses();
     (*outputWriterParaviewParallel_).writeFile(time);
 }
@@ -71,11 +71,11 @@ void ComputationParallel::initialize(int argc, char *argv[])
     // either the Gauss-Seidel or the SOR algorithm is used
     if (settings_.pressureSolver == "SOR")
         pressureSolverParallel_ = std::make_unique<SORParallel>(discretization_, settings_.epsilon, settings_.maximumNumberOfIterations, partitioning_, settings_.omega);
-    //else if (settings_.pressureSolver == "GaussSeidel")
-    //    pressureSolver_ = std::make_unique<GaussSeidel>(discretization_, settings_.epsilon, settings_.maximumNumberOfIterations);
+    // else if (settings_.pressureSolver == "GaussSeidel")
+    //     pressureSolver_ = std::make_unique<GaussSeidel>(discretization_, settings_.epsilon, settings_.maximumNumberOfIterations);
     else
         throw std::invalid_argument("Only SOR and GaussSeidel are supported as pressure solvers.");
-    
+
     outputWriterParaviewParallel_ = std::make_unique<OutputWriterParaviewParallel>(discretization_, partitioning_);
     outputWriterTextParallel_ = std::make_unique<OutputWriterTextParallel>(discretization_, partitioning_);
 
@@ -91,15 +91,15 @@ void ComputationParallel::applyBCOnDirichletBoundary()
     if (partitioning_.ownPartitionContainsLeftBoundary())
     {
         // sets boundary conditions for u(0_local,j_local) based on given Dirichlet conditions
-        for (int j=(*discretization_).uJBegin()-1; j < (*discretization_).uJEnd()+1; j++)
-            (*discretization_).u((*discretization_).uIBegin()-1,j) = settings_.dirichletBcLeft[0];
+        for (int j = (*discretization_).uJBegin() - 1; j < (*discretization_).uJEnd() + 1; j++)
+            (*discretization_).u((*discretization_).uIBegin() - 1, j) = settings_.dirichletBcLeft[0];
     }
 
     if (partitioning_.ownPartitionContainsRightBoundary())
     {
         // sets boundary conditions for u(N_local,j_local) based on given Dirichlet conditions
-        for (int j=(*discretization_).uJBegin()-1; j < (*discretization_).uJEnd()+1; j++)
-            (*discretization_).u((*discretization_).uIEnd(),j) = settings_.dirichletBcRight[0];
+        for (int j = (*discretization_).uJBegin() - 1; j < (*discretization_).uJEnd() + 1; j++)
+            (*discretization_).u((*discretization_).uIEnd(), j) = settings_.dirichletBcRight[0];
     }
 
     if (partitioning_.ownPartitionContainsBottomBoundary())
@@ -112,8 +112,8 @@ void ComputationParallel::applyBCOnDirichletBoundary()
             shiftIEndV = 1;
 
         // sets boundary conditions for v(i_local,0_local) based on given Dirichlet conditions
-        for (int i=(*discretization_).vIBegin()+shiftIBeginV; i < (*discretization_).vIEnd()+shiftIEndV; i++)
-            (*discretization_).v(i,(*discretization_).vJBegin()-1) = settings_.dirichletBcBottom[1];
+        for (int i = (*discretization_).vIBegin() + shiftIBeginV; i < (*discretization_).vIEnd() + shiftIEndV; i++)
+            (*discretization_).v(i, (*discretization_).vJBegin() - 1) = settings_.dirichletBcBottom[1];
     }
 
     if (partitioning_.ownPartitionContainsTopBoundary())
@@ -126,63 +126,61 @@ void ComputationParallel::applyBCOnDirichletBoundary()
             shiftIEndV = 1;
 
         // sets boundary conditions for v(i_local,N_local) based on given Dirichlet conditions
-        for (int i=(*discretization_).vIBegin()+shiftIBeginV; i < (*discretization_).vIEnd()+shiftIEndV; i++)
-            (*discretization_).v(i,(*discretization_).vJEnd()) = settings_.dirichletBcTop[1];
+        for (int i = (*discretization_).vIBegin() + shiftIBeginV; i < (*discretization_).vIEnd() + shiftIEndV; i++)
+            (*discretization_).v(i, (*discretization_).vJEnd()) = settings_.dirichletBcTop[1];
     }
 }
-
 
 void ComputationParallel::applyPreliminaryBCOnDirichletBoundary()
 {
     if (partitioning_.ownPartitionContainsLeftBoundary())
     {
         // sets boundary conditions for F(0_local,j_local) based on given Dirichlet conditions
-        for (int j=(*discretization_).uJBegin()-1; j < (*discretization_).uJEnd()+1; j++)
-            (*discretization_).f((*discretization_).uIBegin()-1,j) = settings_.dirichletBcLeft[0];
+        for (int j = (*discretization_).uJBegin() - 1; j < (*discretization_).uJEnd() + 1; j++)
+            (*discretization_).f((*discretization_).uIBegin() - 1, j) = settings_.dirichletBcLeft[0];
     }
 
     if (partitioning_.ownPartitionContainsRightBoundary())
     {
         // sets boundary conditions for F(N_local,j_local) based on given Dirichlet conditions
-        for (int j=(*discretization_).uJBegin()-1; j < (*discretization_).uJEnd()+1; j++)
-            (*discretization_).f((*discretization_).uIEnd(),j) = settings_.dirichletBcRight[0];
+        for (int j = (*discretization_).uJBegin() - 1; j < (*discretization_).uJEnd() + 1; j++)
+            (*discretization_).f((*discretization_).uIEnd(), j) = settings_.dirichletBcRight[0];
     }
 
     if (partitioning_.ownPartitionContainsBottomBoundary())
     {
         // sets boundary conditions for G(i_local,0_local) based on given Dirichlet conditions
-        for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
-            (*discretization_).g(i,(*discretization_).vJBegin()-1) = settings_.dirichletBcBottom[1];
+        for (int i = (*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
+            (*discretization_).g(i, (*discretization_).vJBegin() - 1) = settings_.dirichletBcBottom[1];
     }
 
     if (partitioning_.ownPartitionContainsTopBoundary())
     {
         // sets boundary conditions for G(i_local,N_local) based on given Dirichlet conditions
-        for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
-            (*discretization_).g(i,(*discretization_).vJEnd()) = settings_.dirichletBcTop[1];
+        for (int i = (*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
+            (*discretization_).g(i, (*discretization_).vJEnd()) = settings_.dirichletBcTop[1];
     }
 }
-
 
 void ComputationParallel::applyBCInHaloCellsAtDirichletBoundary()
 {
     if (partitioning_.ownPartitionContainsLeftBoundary())
     {
         // sets boundary conditions for v(0_local,j_local) based on given Dirichlet conditions and the inner cell values v(1,j), v(N,j)
-        for (int j=(*discretization_).vJBegin()-1; j < (*discretization_).vJEnd()+1; j++)
+        for (int j = (*discretization_).vJBegin() - 1; j < (*discretization_).vJEnd() + 1; j++)
         {
-            const double vLeft = (*discretization_).v((*discretization_).vIBegin(),j);
-            (*discretization_).v((*discretization_).vIBegin()-1,j) = 2.0*settings_.dirichletBcLeft[1] - vLeft;  
+            const double vLeft = (*discretization_).v((*discretization_).vIBegin(), j);
+            (*discretization_).v((*discretization_).vIBegin() - 1, j) = 2.0 * settings_.dirichletBcLeft[1] - vLeft;
         }
     }
 
     if (partitioning_.ownPartitionContainsRightBoundary())
     {
         // sets boundary conditions for v(N+1_local,j_local) based on given Dirichlet conditions and the inner cell values v(1,j), v(N,j)
-        for (int j=(*discretization_).vJBegin()-1; j < (*discretization_).vJEnd()+1; j++)
+        for (int j = (*discretization_).vJBegin() - 1; j < (*discretization_).vJEnd() + 1; j++)
         {
-            const double vRight = (*discretization_).v((*discretization_).vIEnd()-1,j);
-            (*discretization_).v((*discretization_).vIEnd(),j) = 2.0*settings_.dirichletBcRight[1] - vRight;
+            const double vRight = (*discretization_).v((*discretization_).vIEnd() - 1, j);
+            (*discretization_).v((*discretization_).vIEnd(), j) = 2.0 * settings_.dirichletBcRight[1] - vRight;
         }
     }
 
@@ -196,11 +194,11 @@ void ComputationParallel::applyBCInHaloCellsAtDirichletBoundary()
             shiftIEndU = 1;
 
         // sets boundary conditions for u(i_local,0_local) based on given Dirichlet conditions and the inner cell values u(i,1), u(i,N)
-        for (int i=(*discretization_).uIBegin()+shiftIBeginU; i < (*discretization_).uIEnd()+shiftIEndU; i++)
+        for (int i = (*discretization_).uIBegin() + shiftIBeginU; i < (*discretization_).uIEnd() + shiftIEndU; i++)
         {
-            const double uLower = (*discretization_).u(i,(*discretization_).uJBegin());
-            (*discretization_).u(i,(*discretization_).uJBegin()-1) = 2.0*settings_.dirichletBcBottom[0] - uLower;
-        }  
+            const double uLower = (*discretization_).u(i, (*discretization_).uJBegin());
+            (*discretization_).u(i, (*discretization_).uJBegin() - 1) = 2.0 * settings_.dirichletBcBottom[0] - uLower;
+        }
     }
 
     if (partitioning_.ownPartitionContainsTopBoundary())
@@ -213,12 +211,12 @@ void ComputationParallel::applyBCInHaloCellsAtDirichletBoundary()
             shiftIEndU = 1;
 
         // sets boundary conditions for u(i_local,N+1_local) based on given Dirichlet conditions and the inner cell values u(i,1), u(i,N)
-        for (int i=(*discretization_).uIBegin()+shiftIBeginU; i < (*discretization_).uIEnd()+shiftIEndU; i++)
+        for (int i = (*discretization_).uIBegin() + shiftIBeginU; i < (*discretization_).uIEnd() + shiftIEndU; i++)
         {
-            const double uUpper = (*discretization_).u(i,(*discretization_).uJEnd()-1);
-            (*discretization_).u(i,(*discretization_).uJEnd()) = 2.0*settings_.dirichletBcTop[0] - uUpper;
+            const double uUpper = (*discretization_).u(i, (*discretization_).uJEnd() - 1);
+            (*discretization_).u(i, (*discretization_).uJEnd()) = 2.0 * settings_.dirichletBcTop[0] - uUpper;
         }
-    }    
+    }
 }
 
 void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
@@ -235,13 +233,13 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
     {
         std::vector<double> sendLeftUBuffer(nCellsY_);
         std::vector<double> sendLeftVBuffer(nCellsY_);
-       
-        for (int j = 1; j < nCellsY_+1; j++)
+
+        for (int j = 1; j < nCellsY_ + 1; j++)
         {
-            sendLeftUBuffer[j-1] = (*discretization_).u(1,j);
-            sendLeftVBuffer[j-1] = (*discretization_).v(1,j);
+            sendLeftUBuffer[j - 1] = (*discretization_).u(1, j);
+            sendLeftVBuffer[j - 1] = (*discretization_).v(1, j);
         }
-        
+
         sendRequests.emplace_back();
         MPI_Isend(sendLeftUBuffer.data(), nCellsY_, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
 
@@ -261,13 +259,13 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
     {
         std::vector<double> sendRightUBuffer(nCellsY_);
         std::vector<double> sendRightVBuffer(nCellsY_);
-       
-        for (int j = 1; j < nCellsY_+1; j++)
+
+        for (int j = 1; j < nCellsY_ + 1; j++)
         {
-            sendRightUBuffer[j-1] = (*discretization_).u(nCellsX_,j);
-            sendRightVBuffer[j-1] = (*discretization_).v(nCellsX_,j);
+            sendRightUBuffer[j - 1] = (*discretization_).u(nCellsX_, j);
+            sendRightVBuffer[j - 1] = (*discretization_).v(nCellsX_, j);
         }
-        
+
         sendRequests.emplace_back();
         MPI_Isend(sendRightUBuffer.data(), nCellsY_, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
 
@@ -287,13 +285,13 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
     {
         std::vector<double> sendLowerUBuffer(nCellsX_);
         std::vector<double> sendLowerVBuffer(nCellsX_);
-       
-        for (int i = 1; i < nCellsX_+1; i++)
+
+        for (int i = 1; i < nCellsX_ + 1; i++)
         {
-            sendLowerUBuffer[i-1] = (*discretization_).u(i,1);
-            sendLowerVBuffer[i-1] = (*discretization_).v(i,1);
+            sendLowerUBuffer[i - 1] = (*discretization_).u(i, 1);
+            sendLowerVBuffer[i - 1] = (*discretization_).v(i, 1);
         }
-        
+
         sendRequests.emplace_back();
         MPI_Isend(sendLowerUBuffer.data(), nCellsX_, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
 
@@ -313,13 +311,13 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
     {
         std::vector<double> sendUpperUBuffer(nCellsX_);
         std::vector<double> sendUpperVBuffer(nCellsX_);
-       
-        for (int i = 1; i < nCellsX_+1; i++)
+
+        for (int i = 1; i < nCellsX_ + 1; i++)
         {
-            sendUpperUBuffer[i-1] = (*discretization_).u(i,nCellsY_);
-            sendUpperVBuffer[i-1] = (*discretization_).v(i,nCellsY_);
+            sendUpperUBuffer[i - 1] = (*discretization_).u(i, nCellsY_);
+            sendUpperVBuffer[i - 1] = (*discretization_).v(i, nCellsY_);
         }
-        
+
         sendRequests.emplace_back();
         MPI_Isend(sendUpperUBuffer.data(), nCellsX_, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
 
@@ -336,45 +334,44 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
     if (!partitioning_.ownPartitionContainsLeftBoundary())
     {
         MPI_Waitall(receiveLeftRequests.size(), receiveLeftRequests.data(), MPI_STATUSES_IGNORE);
-        for (int j = 1; j < nCellsY_+1; j++)
+        for (int j = 1; j < nCellsY_ + 1; j++)
         {
-            (*discretization_).u(0,j) = receiveLeftUBuffer[j-1];
-            (*discretization_).v(0,j) = receiveLeftVBuffer[j-1];
-        }  
+            (*discretization_).u(0, j) = receiveLeftUBuffer[j - 1];
+            (*discretization_).v(0, j) = receiveLeftVBuffer[j - 1];
+        }
     }
 
     if (!partitioning_.ownPartitionContainsRightBoundary())
     {
         MPI_Waitall(receiveRightRequests.size(), receiveRightRequests.data(), MPI_STATUSES_IGNORE);
-        for (int j = 1; j < nCellsY_+1; j++)
+        for (int j = 1; j < nCellsY_ + 1; j++)
         {
-            (*discretization_).u(nCellsX_+1,j) = receiveRightUBuffer[j-1];
-            (*discretization_).v(nCellsX_+1,j) = receiveRightVBuffer[j-1];
-        }  
+            (*discretization_).u(nCellsX_ + 1, j) = receiveRightUBuffer[j - 1];
+            (*discretization_).v(nCellsX_ + 1, j) = receiveRightVBuffer[j - 1];
+        }
     }
 
     if (!partitioning_.ownPartitionContainsBottomBoundary())
     {
         MPI_Waitall(receiveLowerRequests.size(), receiveLowerRequests.data(), MPI_STATUSES_IGNORE);
-        for (int i = 1; i < nCellsX_+1; i++)
+        for (int i = 1; i < nCellsX_ + 1; i++)
         {
-            (*discretization_).u(i,0) = receiveLowerUBuffer[i-1];
-            (*discretization_).v(i,0) = receiveLowerVBuffer[i-1];
-        }  
+            (*discretization_).u(i, 0) = receiveLowerUBuffer[i - 1];
+            (*discretization_).v(i, 0) = receiveLowerVBuffer[i - 1];
+        }
     }
 
     if (!partitioning_.ownPartitionContainsTopBoundary())
     {
         MPI_Waitall(receiveUpperRequests.size(), receiveUpperRequests.data(), MPI_STATUSES_IGNORE);
-        for (int i = 1; i < nCellsX_+1; i++)
+        for (int i = 1; i < nCellsX_ + 1; i++)
         {
-            (*discretization_).u(i,nCellsY_+1) = receiveUpperUBuffer[i-1];
-            (*discretization_).v(i,nCellsY_+1) = receiveUpperVBuffer[i-1];
-        }  
+            (*discretization_).u(i, nCellsY_ + 1) = receiveUpperUBuffer[i - 1];
+            (*discretization_).v(i, nCellsY_ + 1) = receiveUpperVBuffer[i - 1];
+        }
     }
 
     MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE);
-
 
     std::vector<MPI_Request> sendDiagonalRequests;
     MPI_Request receiveLeftUpperDiagonalRequest;
@@ -385,36 +382,36 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
 
     if (!partitioning_.ownPartitionContainsLeftBoundary() && !partitioning_.ownPartitionContainsTopBoundary())
     {
-        std::vector<double> sendLeftUpperDiagonalVBuffer = {(*discretization_).v(1,nCellsY_)};
-        
-        sendDiagonalRequests.emplace_back();
-        MPI_Isend(sendLeftUpperDiagonalVBuffer.data(), 1, MPI_DOUBLE, partitioning_.topNeighbourRankNo()-1, 0, MPI_COMM_WORLD, &sendDiagonalRequests.back());
+        std::vector<double> sendLeftUpperDiagonalVBuffer = {(*discretization_).v(1, nCellsY_)};
 
-        MPI_Irecv(receiveLeftUpperDiagonalUBuffer.data(), 1, MPI_DOUBLE, partitioning_.topNeighbourRankNo()-1, 0, MPI_COMM_WORLD, &receiveLeftUpperDiagonalRequest);
+        sendDiagonalRequests.emplace_back();
+        MPI_Isend(sendLeftUpperDiagonalVBuffer.data(), 1, MPI_DOUBLE, partitioning_.topNeighbourRankNo() - 1, 0, MPI_COMM_WORLD, &sendDiagonalRequests.back());
+
+        MPI_Irecv(receiveLeftUpperDiagonalUBuffer.data(), 1, MPI_DOUBLE, partitioning_.topNeighbourRankNo() - 1, 0, MPI_COMM_WORLD, &receiveLeftUpperDiagonalRequest);
     }
-    
+
     if (!partitioning_.ownPartitionContainsRightBoundary() && !partitioning_.ownPartitionContainsBottomBoundary())
     {
-        std::vector<double> sendLowerRightDiagonalUBuffer = {(*discretization_).u(nCellsX_,1)};
-        
-        sendDiagonalRequests.emplace_back();
-        MPI_Isend(sendLowerRightDiagonalUBuffer.data(), 1, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo()+1, 0, MPI_COMM_WORLD, &sendDiagonalRequests.back());
+        std::vector<double> sendLowerRightDiagonalUBuffer = {(*discretization_).u(nCellsX_, 1)};
 
-        MPI_Irecv(receiveRightLowerDiagonalVBuffer.data(), 1, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo()+1, 0, MPI_COMM_WORLD, &receiveRightLowerDiagonalRequest);
+        sendDiagonalRequests.emplace_back();
+        MPI_Isend(sendLowerRightDiagonalUBuffer.data(), 1, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo() + 1, 0, MPI_COMM_WORLD, &sendDiagonalRequests.back());
+
+        MPI_Irecv(receiveRightLowerDiagonalVBuffer.data(), 1, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo() + 1, 0, MPI_COMM_WORLD, &receiveRightLowerDiagonalRequest);
     }
 
     if (!partitioning_.ownPartitionContainsLeftBoundary() && !partitioning_.ownPartitionContainsTopBoundary())
     {
         MPI_Wait(&receiveLeftUpperDiagonalRequest, MPI_STATUS_IGNORE);
 
-        (*discretization_).u(0,nCellsY_+1) = receiveLeftUpperDiagonalUBuffer[0];
+        (*discretization_).u(0, nCellsY_ + 1) = receiveLeftUpperDiagonalUBuffer[0];
     }
 
     if (!partitioning_.ownPartitionContainsRightBoundary() && !partitioning_.ownPartitionContainsBottomBoundary())
     {
         MPI_Wait(&receiveRightLowerDiagonalRequest, MPI_STATUS_IGNORE);
 
-        (*discretization_).v(nCellsX_+1,0) = receiveRightLowerDiagonalVBuffer[0];
+        (*discretization_).v(nCellsX_ + 1, 0) = receiveRightLowerDiagonalVBuffer[0];
     }
 
     MPI_Waitall(sendDiagonalRequests.size(), sendDiagonalRequests.data(), MPI_STATUSES_IGNORE);
@@ -426,12 +423,11 @@ void ComputationParallel::computeTimeStepWidthParallel()
 
     const double sendDt = dt_;
     double receiveDt;
-    
+
     MPI_Allreduce(&sendDt, &receiveDt, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
 
     dt_ = receiveDt;
 }
-
 
 void ComputationParallel::computePreliminaryVelocities()
 {
@@ -442,33 +438,22 @@ void ComputationParallel::computePreliminaryVelocities()
     if (!partitioning_.ownPartitionContainsTopBoundary())
         shiftJEndG = 1;
 
-    for (int i=(*discretization_).uIBegin(); i < (*discretization_).uIEnd()+shiftIEndF; i++)
+    for (int i = (*discretization_).uIBegin(); i < (*discretization_).uIEnd() + shiftIEndF; i++)
     {
-        for (int j=(*discretization_).uJBegin(); j < (*discretization_).uJEnd(); j++)
+        for (int j = (*discretization_).uJBegin(); j < (*discretization_).uJEnd(); j++)
         {
-            (*discretization_).f(i,j) = (*discretization_).u(i,j) + dt_ * (
-                                            (1.0/settings_.re) * ((*discretization_).computeD2uDx2(i,j) + (*discretization_).computeD2uDy2(i,j))
-                                            - (*discretization_).computeDu2Dx(i,j)
-                                            - (*discretization_).computeDuvDy(i,j)
-                                            + settings_.g[0]
-                                            );
+            (*discretization_).f(i, j) = (*discretization_).u(i, j) + dt_ * ((1.0 / settings_.re) * ((*discretization_).computeD2uDx2(i, j) + (*discretization_).computeD2uDy2(i, j)) - (*discretization_).computeDu2Dx(i, j) - (*discretization_).computeDuvDy(i, j) + settings_.g[0]);
         }
     }
 
-    for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
+    for (int i = (*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
     {
-        for (int j=(*discretization_).vJBegin(); j < (*discretization_).vJEnd()+shiftJEndG; j++)
+        for (int j = (*discretization_).vJBegin(); j < (*discretization_).vJEnd() + shiftJEndG; j++)
         {
-            (*discretization_).g(i,j) = (*discretization_).v(i,j) + dt_ * (
-                                            (1.0/settings_.re) * ((*discretization_).computeD2vDx2(i,j) + (*discretization_).computeD2vDy2(i,j))
-                                            - (*discretization_).computeDuvDx(i,j)
-                                            - (*discretization_).computeDv2Dy(i,j)
-                                            + settings_.g[1]
-                                            );
+            (*discretization_).g(i, j) = (*discretization_).v(i, j) + dt_ * ((1.0 / settings_.re) * ((*discretization_).computeD2vDx2(i, j) + (*discretization_).computeD2vDy2(i, j)) - (*discretization_).computeDuvDx(i, j) - (*discretization_).computeDv2Dy(i, j) + settings_.g[1]);
         }
     }
 }
-
 
 void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProcesses()
 {
@@ -492,21 +477,21 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
     if (!partitioning_.ownPartitionContainsRightBoundary())
     {
         std::vector<double> sendRightFBuffer(nCellsY_);
-       
-        for (int j = 1; j < nCellsY_+1; j++)
-            sendRightFBuffer[j-1] = (*discretization_).f(nCellsX_,j);
-        
+
+        for (int j = 1; j < nCellsY_ + 1; j++)
+            sendRightFBuffer[j - 1] = (*discretization_).f(nCellsX_, j);
+
         sendRequests.emplace_back();
         MPI_Isend(sendRightFBuffer.data(), nCellsY_, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
     }
 
-     if (!partitioning_.ownPartitionContainsTopBoundary())
+    if (!partitioning_.ownPartitionContainsTopBoundary())
     {
         std::vector<double> sendUpperGBuffer(nCellsX_);
-       
-        for (int i = 1; i < nCellsX_+1; i++)
-            sendUpperGBuffer[i-1] = (*discretization_).g(i,nCellsY_);
-        
+
+        for (int i = 1; i < nCellsX_ + 1; i++)
+            sendUpperGBuffer[i - 1] = (*discretization_).g(i, nCellsY_);
+
         sendRequests.emplace_back();
         MPI_Isend(sendUpperGBuffer.data(), nCellsX_, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
     }
@@ -515,16 +500,16 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
     {
         MPI_Wait(&receiveLeftRequest, MPI_STATUS_IGNORE);
 
-        for (int j = 1; j < nCellsY_+1; j++)
-            (*discretization_).f(0,j) = receiveLeftFBuffer[j-1];
+        for (int j = 1; j < nCellsY_ + 1; j++)
+            (*discretization_).f(0, j) = receiveLeftFBuffer[j - 1];
     }
 
     if (!partitioning_.ownPartitionContainsBottomBoundary())
     {
         MPI_Wait(&receiveLowerRequest, MPI_STATUS_IGNORE);
 
-        for (int i = 1; i < nCellsX_+1; i++)
-            (*discretization_).g(i,0) = receiveLowerGBuffer[i-1];
+        for (int i = 1; i < nCellsX_ + 1; i++)
+            (*discretization_).g(i, 0) = receiveLowerGBuffer[i - 1];
     }
 
     MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE);
@@ -544,20 +529,18 @@ void ComputationParallel::computeVelocities()
     if (!partitioning_.ownPartitionContainsTopBoundary())
         shiftJEndV = 1;
 
-    for (int i=(*discretization_).uIBegin(); i < (*discretization_).uIEnd()+shiftIEndU; i++)
+    for (int i = (*discretization_).uIBegin(); i < (*discretization_).uIEnd() + shiftIEndU; i++)
     {
-        for (int j=(*discretization_).uJBegin(); j < (*discretization_).uJEnd(); j++)
+        for (int j = (*discretization_).uJBegin(); j < (*discretization_).uJEnd(); j++)
         {
-            (*discretization_).u(i,j) = (*discretization_).f(i,j) - (dt_/dx_)
-                                            * ((*discretization_).p(i+1,j) - (*discretization_).p(i,j));
+            (*discretization_).u(i, j) = (*discretization_).f(i, j) - (dt_ / dx_) * ((*discretization_).p(i + 1, j) - (*discretization_).p(i, j));
         }
     }
-    for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
+    for (int i = (*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
     {
-        for (int j=(*discretization_).vJBegin(); j < (*discretization_).vJEnd()+shiftJEndV; j++)
+        for (int j = (*discretization_).vJBegin(); j < (*discretization_).vJEnd() + shiftJEndV; j++)
         {
-            (*discretization_).v(i,j) = (*discretization_).g(i,j) - (dt_/dy_)
-                                            * ((*discretization_).p(i,j+1) - (*discretization_).p(i,j));
+            (*discretization_).v(i, j) = (*discretization_).g(i, j) - (dt_ / dy_) * ((*discretization_).p(i, j + 1) - (*discretization_).p(i, j));
         }
     }
 }
