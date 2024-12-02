@@ -72,7 +72,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         int k = 0;
         for (int j = pJBegin_+leftAndLowerOffset_[secondHalfStep]; j < pJEnd_; j+=2)
         {
-            sendLeftPBuffer[k] = (*discretization_).p(pIBegin_,j);
+            sendLeftPBuffer.at(k) = (*discretization_).p(pIBegin_,j);
             k++;
         }
         sendRequests.emplace_back();
@@ -87,7 +87,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         int k = 0;
         for (int i = pIBegin_+leftAndLowerOffset_[secondHalfStep]; i < pIEnd_; i+=2)
         {
-            sendLowerPBuffer[k] = (*discretization_).p(i,pJBegin_);
+            sendLowerPBuffer.at(k) = (*discretization_).p(i,pJBegin_);
             k++;
         }
         sendRequests.emplace_back();
@@ -102,7 +102,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         int k = 0;
         for (int j = pJBegin_+rightOffset_[secondHalfStep]; j < pJEnd_; j+=2)
         {
-            sendRightPBuffer[k] = (*discretization_).p(pIEnd_-1,j);
+            sendRightPBuffer.at(k) = (*discretization_).p(pIEnd_-1,j);
             k++;
         }
         sendRequests.emplace_back();
@@ -117,7 +117,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         int k = 0;
         for (int i = pIBegin_+upperOffset_[secondHalfStep]; i < pIEnd_; i+=2)
         {
-            sendUpperPBuffer[k] = (*discretization_).p(i,pJEnd_-1);
+            sendUpperPBuffer.at(k) = (*discretization_).p(i,pJEnd_-1);
             k++;
         }
         sendRequests.emplace_back();
@@ -135,7 +135,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         int k = 0;
         for (int j = pJBegin_+!leftAndLowerOffset_[secondHalfStep]; j < pJEnd_; j+=2)
         {
-            (*discretization_).p(pIBegin_-1,j) = receiveLeftPBuffer[k];
+            (*discretization_).p(pIBegin_-1,j) = receiveLeftPBuffer.at(k);
             k++;
         }
     }
@@ -146,7 +146,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         int k = 0;
         for (int i = pIBegin_+!leftAndLowerOffset_[secondHalfStep]; i < pIEnd_; i+=2)
         {
-            (*discretization_).p(i,pJBegin_-1) = receiveLowerPBuffer[k];
+            (*discretization_).p(i,pJBegin_-1) = receiveLowerPBuffer.at(k);
             k++;
         }
     }
@@ -157,7 +157,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         int k = 0;
         for (int j = pJBegin_+!rightOffset_[secondHalfStep]; j < pJEnd_; j+=2)
         {
-            (*discretization_).p(pIEnd_,j) = receiveRightPBuffer[k];
+            (*discretization_).p(pIEnd_,j) = receiveRightPBuffer.at(k);
             k++;
         }
     }
@@ -168,7 +168,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         int k = 0;
         for (int i = pIBegin_+!upperOffset_[secondHalfStep]; i < pIEnd_; i+=2)
         {
-            (*discretization_).p(i,pJEnd_) = receiveUpperPBuffer[k];
+            (*discretization_).p(i,pJEnd_) = receiveUpperPBuffer.at(k);
             k++;
         }
     }

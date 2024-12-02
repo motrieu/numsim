@@ -250,7 +250,7 @@ void ComputationParallel::receiveAndSendDiagonalPressureFromAndToOtherProcess()
     {
         MPI_Wait(&receiveRightUpperDiagonalRequest, MPI_STATUS_IGNORE);
 
-        (*discretization_).p(nCellsX_+1,nCellsY_+1) = receiveRightUpperDiagonalPBuffer[0];
+        (*discretization_).p(nCellsX_+1,nCellsY_+1) = receiveRightUpperDiagonalPBuffer.at(0);
     }
 }
 
@@ -271,8 +271,8 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
        
         for (int j = 1; j < nCellsY_+1; j++)
         {
-            sendLeftUBuffer[j-1] = (*discretization_).u(1,j);
-            sendLeftVBuffer[j-1] = (*discretization_).v(1,j);
+            sendLeftUBuffer.at(j-1) = (*discretization_).u(1,j);
+            sendLeftVBuffer.at(j-1) = (*discretization_).v(1,j);
         }
         
         sendRequests.emplace_back();
@@ -297,8 +297,8 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
        
         for (int j = 1; j < nCellsY_+1; j++)
         {
-            sendRightUBuffer[j-1] = (*discretization_).u(nCellsX_,j);
-            sendRightVBuffer[j-1] = (*discretization_).v(nCellsX_,j);
+            sendRightUBuffer.at(j-1) = (*discretization_).u(nCellsX_,j);
+            sendRightVBuffer.at(j-1) = (*discretization_).v(nCellsX_,j);
         }
         
         sendRequests.emplace_back();
@@ -323,8 +323,8 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
        
         for (int i = 1; i < nCellsX_+1; i++)
         {
-            sendLowerUBuffer[i-1] = (*discretization_).u(i,1);
-            sendLowerVBuffer[i-1] = (*discretization_).v(i,1);
+            sendLowerUBuffer.at(i-1) = (*discretization_).u(i,1);
+            sendLowerVBuffer.at(i-1) = (*discretization_).v(i,1);
         }
         
         sendRequests.emplace_back();
@@ -349,8 +349,8 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
        
         for (int i = 1; i < nCellsX_+1; i++)
         {
-            sendUpperUBuffer[i-1] = (*discretization_).u(i,nCellsY_);
-            sendUpperVBuffer[i-1] = (*discretization_).v(i,nCellsY_);
+            sendUpperUBuffer.at(i-1) = (*discretization_).u(i,nCellsY_);
+            sendUpperVBuffer.at(i-1) = (*discretization_).v(i,nCellsY_);
         }
         
         sendRequests.emplace_back();
@@ -374,8 +374,8 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
         MPI_Waitall(receiveLeftRequests.size(), receiveLeftRequests.data(), MPI_STATUSES_IGNORE);
         for (int j = 1; j < nCellsY_+1; j++)
         {
-            (*discretization_).u(0,j) = receiveLeftUBuffer[j-1];
-            (*discretization_).v(0,j) = receiveLeftVBuffer[j-1];
+            (*discretization_).u(0,j) = receiveLeftUBuffer.at(j-1);
+            (*discretization_).v(0,j) = receiveLeftVBuffer.at(j-1);
         }  
     }
 
@@ -384,8 +384,8 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
         MPI_Waitall(receiveRightRequests.size(), receiveRightRequests.data(), MPI_STATUSES_IGNORE);
         for (int j = 1; j < nCellsY_+1; j++)
         {
-            (*discretization_).u(nCellsX_+1,j) = receiveRightUBuffer[j-1];
-            (*discretization_).v(nCellsX_+1,j) = receiveRightVBuffer[j-1];
+            (*discretization_).u(nCellsX_+1,j) = receiveRightUBuffer.at(j-1);
+            (*discretization_).v(nCellsX_+1,j) = receiveRightVBuffer.at(j-1);
         }  
     }
 
@@ -394,8 +394,8 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
         MPI_Waitall(receiveLowerRequests.size(), receiveLowerRequests.data(), MPI_STATUSES_IGNORE);
         for (int i = 1; i < nCellsX_+1; i++)
         {
-            (*discretization_).u(i,0) = receiveLowerUBuffer[i-1];
-            (*discretization_).v(i,0) = receiveLowerVBuffer[i-1];
+            (*discretization_).u(i,0) = receiveLowerUBuffer.at(i-1);
+            (*discretization_).v(i,0) = receiveLowerVBuffer.at(i-1);
         }  
     }
 
@@ -404,8 +404,8 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
         MPI_Waitall(receiveUpperRequests.size(), receiveUpperRequests.data(), MPI_STATUSES_IGNORE);
         for (int i = 1; i < nCellsX_+1; i++)
         {
-            (*discretization_).u(i,nCellsY_+1) = receiveUpperUBuffer[i-1];
-            (*discretization_).v(i,nCellsY_+1) = receiveUpperVBuffer[i-1];
+            (*discretization_).u(i,nCellsY_+1) = receiveUpperUBuffer.at(i-1);
+            (*discretization_).v(i,nCellsY_+1) = receiveUpperVBuffer.at(i-1);
         }  
     }
 
@@ -444,14 +444,14 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
     {
         MPI_Wait(&receiveLeftUpperDiagonalRequest, MPI_STATUS_IGNORE);
 
-        (*discretization_).u(0,nCellsY_+1) = receiveLeftUpperDiagonalUBuffer[0];
+        (*discretization_).u(0,nCellsY_+1) = receiveLeftUpperDiagonalUBuffer.at(0);
     }
 
     if (!partitioning_.ownPartitionContainsRightBoundary() && !partitioning_.ownPartitionContainsBottomBoundary())
     {
         MPI_Wait(&receiveRightLowerDiagonalRequest, MPI_STATUS_IGNORE);
 
-        (*discretization_).v(nCellsX_+1,0) = receiveRightLowerDiagonalVBuffer[0];
+        (*discretization_).v(nCellsX_+1,0) = receiveRightLowerDiagonalVBuffer.at(0);
     }
 }
 
@@ -529,7 +529,7 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
         std::vector<double> sendRightFBuffer(nCellsY_, 0);
        
         for (int j = 1; j < nCellsY_+1; j++)
-            sendRightFBuffer[j-1] = (*discretization_).f(nCellsX_,j);
+            sendRightFBuffer.at(j-1) = (*discretization_).f(nCellsX_,j);
         
         sendRequests.emplace_back();
         MPI_Isend(sendRightFBuffer.data(), nCellsY_, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
@@ -540,7 +540,7 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
         std::vector<double> sendUpperGBuffer(nCellsX_, 0);
        
         for (int i = 1; i < nCellsX_+1; i++)
-            sendUpperGBuffer[i-1] = (*discretization_).g(i,nCellsY_);
+            sendUpperGBuffer.at(i-1) = (*discretization_).g(i,nCellsY_);
         
         sendRequests.emplace_back();
         MPI_Isend(sendUpperGBuffer.data(), nCellsX_, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
@@ -554,7 +554,7 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
         MPI_Wait(&receiveLeftRequest, MPI_STATUS_IGNORE);
 
         for (int j = 1; j < nCellsY_+1; j++)
-            (*discretization_).f(0,j) = receiveLeftFBuffer[j-1];
+            (*discretization_).f(0,j) = receiveLeftFBuffer.at(j-1);
     }
 
     if (!partitioning_.ownPartitionContainsBottomBoundary())
@@ -562,7 +562,7 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
         MPI_Wait(&receiveLowerRequest, MPI_STATUS_IGNORE);
 
         for (int i = 1; i < nCellsX_+1; i++)
-            (*discretization_).g(i,0) = receiveLowerGBuffer[i-1];
+            (*discretization_).g(i,0) = receiveLowerGBuffer.at(i-1);
     }
 }
 
