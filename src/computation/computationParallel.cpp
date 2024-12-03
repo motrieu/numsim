@@ -14,6 +14,9 @@ void ComputationParallel::runSimulation()
 
         if (time >= timeNextOutput)
         {
+            // first
+            (*pressureSolverParallel_).setDiagonalBoundaryValuesOnDirichletParallelForOutput();
+            // second and override the needed corners
             //receiveAndSendDiagonalPressureFromAndToOtherProcess();
 
             (*outputWriterParaviewParallel_).writeFile(time);
@@ -43,6 +46,7 @@ void ComputationParallel::runSimulation()
     }
     
     receiveAndSendVelocitiesFromAndToOtherProcesses();
+    (*pressureSolverParallel_).setDiagonalBoundaryValuesOnDirichletParallelForOutput();
     //receiveAndSendDiagonalPressureFromAndToOtherProcess();
     (*outputWriterParaviewParallel_).writeFile(time);
 }
