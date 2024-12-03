@@ -31,7 +31,7 @@ void ComputationParallel::runSimulation()
 
         computePreliminaryVelocities();
 
-        //receiveAndSendPreliminaryVelocitiesFromAndToOtherProcesses();
+        receiveAndSendPreliminaryVelocitiesFromAndToOtherProcesses();
 
         computeRightHandSide();
 
