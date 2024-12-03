@@ -26,6 +26,28 @@ PressureSolverParallel::PressureSolverParallel(std::shared_ptr<Discretization> d
     numberOfValuesGlobal_ = partitioning_.nCellsGlobal()[0] * partitioning_.nCellsGlobal()[1];
 }
 
+void PressureSolverParallel::setDiagonalBoundaryValuesOnDirichletParallelForOutput()
+{
+    // handles upper-left corner
+    if (partitioning_.ownPartitionContainsLeftBoundary())
+        (*discretization_).p(pIBegin_-1,pJEnd_) = (*discretization_).p(pIBegin_,pJEnd_);
+
+    // handles lower-left corner
+    if ((partitioning_.ownPartitionContainsLeftBoundary()) && (partitioning_.ownPartitionContainsBottomBoundary()))
+        (*discretization_).p(pIBegin_-1,pJBegin_-1) = (*discretization_).p(pIBegin_,pJBegin_);
+
+    // handles lower-right corner
+    if (partitioning_.ownPartitionContainsBottomBoundary())
+        (*discretization_).p(pIEnd_,pJBegin_-1) = (*discretization_).p(pIEnd_,pJBegin_);
+
+    // handles upper-right corner
+    if (partitioning_.ownPartitionContainsRightBoundary())
+        (*discretization_).p(pIEnd_,pJEnd_) = (*discretization_).p(pIEnd_-1,pJEnd_);
+    if (partitioning_.ownPartitionContainsTopBoundary())
+        (*discretization_).p(pIEnd_,pJEnd_) = (*discretization_).p(pIEnd_,pJEnd_-1);
+}
+
+
 void PressureSolverParallel::setBoundaryValuesOnDirichletParallel()
 {
     if (partitioning_.ownPartitionContainsLeftBoundary())

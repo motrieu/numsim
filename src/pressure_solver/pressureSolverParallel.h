@@ -15,6 +15,8 @@ public:
     /// @param partitioning contains information about the partition of the physical domain needed for MPI
     PressureSolverParallel(std::shared_ptr<Discretization> discretization, double epsilon, int maximumNumberOfIterations, Partitioning partitioning);
 
+    void setDiagonalBoundaryValuesOnDirichletParallelForOutput();
+
 protected:
 
     /// @brief if the partition contains Dirichlet boundaries, then for each of them the boundary values for
