@@ -473,11 +473,11 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
 
     std::vector<double> receiveLeftFBuffer(nCellsY_);
     std::vector<double> receiveLowerGBuffer(nCellsX_);
+    std::vector<double> sendRightFBuffer(nCellsY_);
+    std::vector<double> sendUpperGBuffer(nCellsX_);
 
     if (!partitioning_.ownPartitionContainsRightBoundary())
     {
-        std::vector<double> sendRightFBuffer(nCellsY_);
-       
         for (int j = 1; j < nCellsY_+1; j++)
             sendRightFBuffer[j-1] = (*discretization_).f(nCellsX_,j);
         
@@ -486,8 +486,6 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
 
     if (!partitioning_.ownPartitionContainsTopBoundary())
     {
-        std::vector<double> sendUpperGBuffer(nCellsX_);
-       
         for (int i = 1; i < nCellsX_+1; i++)
             sendUpperGBuffer[i-1] = (*discretization_).g(i,nCellsY_);
         
