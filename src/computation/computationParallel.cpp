@@ -10,11 +10,11 @@ void ComputationParallel::runSimulation()
 
     while (time < settings_.endTime)
     {
-        receiveAndSendVelocitiesFromAndToOtherProcesses();
+        //receiveAndSendVelocitiesFromAndToOtherProcesses();
 
         if (time >= timeNextOutput)
         {
-            receiveAndSendDiagonalPressureFromAndToOtherProcess();
+            //receiveAndSendDiagonalPressureFromAndToOtherProcess();
 
             (*outputWriterParaviewParallel_).writeFile(time);
             //(*outputWriterTextParallel_).writeFile(time);
@@ -31,7 +31,7 @@ void ComputationParallel::runSimulation()
 
         computePreliminaryVelocities();
 
-        receiveAndSendPreliminaryVelocitiesFromAndToOtherProcesses();
+        //receiveAndSendPreliminaryVelocitiesFromAndToOtherProcesses();
 
         computeRightHandSide();
 
@@ -42,8 +42,8 @@ void ComputationParallel::runSimulation()
         time += dt_;
     }
     
-    receiveAndSendVelocitiesFromAndToOtherProcesses();
-    receiveAndSendDiagonalPressureFromAndToOtherProcess();
+    //receiveAndSendVelocitiesFromAndToOtherProcesses();
+    //receiveAndSendDiagonalPressureFromAndToOtherProcess();
     (*outputWriterParaviewParallel_).writeFile(time);
 }
 void ComputationParallel::initialize(int argc, char *argv[])
