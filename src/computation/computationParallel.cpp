@@ -17,7 +17,7 @@ void ComputationParallel::runSimulation()
             // first
             (*pressureSolverParallel_).setDiagonalBoundaryValuesOnDirichletParallelForOutput();
             // second and override the needed corners
-            //receiveAndSendDiagonalPressureFromAndToOtherProcess();
+            receiveAndSendDiagonalPressureFromAndToOtherProcess();
 
             (*outputWriterParaviewParallel_).writeFile(time);
             //(*outputWriterTextParallel_).writeFile(time);
@@ -47,7 +47,7 @@ void ComputationParallel::runSimulation()
     
     receiveAndSendVelocitiesFromAndToOtherProcesses();
     (*pressureSolverParallel_).setDiagonalBoundaryValuesOnDirichletParallelForOutput();
-    //receiveAndSendDiagonalPressureFromAndToOtherProcess();
+    receiveAndSendDiagonalPressureFromAndToOtherProcess();
     (*outputWriterParaviewParallel_).writeFile(time);
 }
 void ComputationParallel::initialize(int argc, char *argv[])
@@ -233,17 +233,18 @@ void ComputationParallel::receiveAndSendDiagonalPressureFromAndToOtherProcess()
 {
     MPI_Request diagonalRequest;
 
+    std::vector<double> diagonalPBuffer(1);
+
     if ((!partitioning_.ownPartitionContainsLeftBoundary()) && (!partitioning_.ownPartitionContainsBottomBoundary()))
     {
-        std::vector<double> sendLeftLowerDiagonalPBuffer = {(*discretization_).p(1,1)};
+        diagonalPBuffer.at(0) = (*discretization_).p(1,1);
 
-        MPI_Isend(sendLeftLowerDiagonalPBuffer.data(), 1, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo()-1, 0, MPI_COMM_WORLD, &diagonalRequest);
+        MPI_Isend(diagonalPBuffer.data(), 1, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo()-1, 0, MPI_COMM_WORLD, &diagonalRequest);
     }
 
-    std::vector<double> receiveRightUpperDiagonalPBuffer(1);
     if ((!partitioning_.ownPartitionContainsRightBoundary()) && (!partitioning_.ownPartitionContainsTopBoundary()))
     {
-        MPI_Irecv(receiveRightUpperDiagonalPBuffer.data(), 1, MPI_DOUBLE, partitioning_.topNeighbourRankNo()+1, 0, MPI_COMM_WORLD, &diagonalRequest);
+        MPI_Irecv(diagonalPBuffer.data(), 1, MPI_DOUBLE, partitioning_.topNeighbourRankNo()+1, 0, MPI_COMM_WORLD, &diagonalRequest);
     }
 
 
@@ -251,7 +252,7 @@ void ComputationParallel::receiveAndSendDiagonalPressureFromAndToOtherProcess()
     {
         MPI_Wait(&diagonalRequest, MPI_STATUS_IGNORE);
 
-        (*discretization_).p(nCellsX_+1,nCellsY_+1) = receiveRightUpperDiagonalPBuffer[0];
+        (*discretization_).p(nCellsX_+1,nCellsY_+1) = diagonalPBuffer.at(0);
     }
 }
 
