@@ -471,46 +471,66 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
     MPI_Request lowerRequest;
     MPI_Request upperRequest;
 
-    std::vector<double> receiveLeftFBuffer(nCellsY_);
-    std::vector<double> receiveLowerGBuffer(nCellsX_);
-    std::vector<double> sendRightFBuffer(nCellsY_);
-    std::vector<double> sendUpperGBuffer(nCellsX_);
+    std::vector<double> leftFBuffer(nCellsY_);
+    std::vector<double> lowerGBuffer(nCellsX_);
+    std::vector<double> rightFBuffer(nCellsY_);
+    std::vector<double> upperGBuffer(nCellsX_);
 
     if (!partitioning_.ownPartitionContainsRightBoundary())
     {
         for (int j = 1; j < nCellsY_+1; j++)
-            sendRightFBuffer[j-1] = (*discretization_).f(nCellsX_,j);
+            rightFBuffer.at(j-1) = (*discretization_).f(nCellsX_,j);
         
-        MPI_Isend(sendRightFBuffer.data(), nCellsY_, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &rightRequest);
+        MPI_Isend(rightFBuffer.data(), nCellsY_, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &rightRequest);
+    
+        MPI_Irecv(rightFBuffer.data(), nCellsY_, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &rightRequest);
     }
 
     if (!partitioning_.ownPartitionContainsTopBoundary())
     {
         for (int i = 1; i < nCellsX_+1; i++)
-            sendUpperGBuffer[i-1] = (*discretization_).g(i,nCellsY_);
+            upperGBuffer.at(i-1) = (*discretization_).g(i,nCellsY_);
         
-        MPI_Isend(sendUpperGBuffer.data(), nCellsX_, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &upperRequest);
+        MPI_Isend(upperGBuffer.data(), nCellsX_, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &upperRequest);
+
+        MPI_Irecv(upperGBuffer.data(), nCellsX_, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &upperRequest);
     }
 
     if (!partitioning_.ownPartitionContainsLeftBoundary())
     {
-        MPI_Irecv(receiveLeftFBuffer.data(), nCellsY_, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &leftRequest);
+        for (int j = 1; j < nCellsY_+1; j++)
+            leftFBuffer.at(j-1) = (*discretization_).f(0,j);
+        
+        MPI_Isend(leftFBuffer.data(), nCellsY_, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &leftRequest);
+
+        MPI_Irecv(leftFBuffer.data(), nCellsY_, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &leftRequest);
     }
 
     if (!partitioning_.ownPartitionContainsBottomBoundary())
     {
-        MPI_Irecv(receiveLowerGBuffer.data(), nCellsX_, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &lowerRequest);
+        for (int i = 1; i < nCellsX_+1; i++)
+            lowerGBuffer.at(i-1) = (*discretization_).g(i,0);
+        
+        MPI_Isend(lowerGBuffer.data(), nCellsX_, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &lowerRequest);
+        
+        MPI_Irecv(lowerGBuffer.data(), nCellsX_, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &lowerRequest);
     }
 
 
     if (!partitioning_.ownPartitionContainsRightBoundary())
     {
         MPI_Wait(&rightRequest, MPI_STATUS_IGNORE);
+
+        for (int j = 1; j < nCellsY_+1; j++)
+            (*discretization_).f(nCellsX_+1,j) = rightFBuffer.at(j-1);
     }
 
     if (!partitioning_.ownPartitionContainsTopBoundary())
     {
         MPI_Wait(&upperRequest, MPI_STATUS_IGNORE);
+
+        for (int i = 1; i < nCellsX_+1; i++)
+            (*discretization_).g(i,nCellsY_+1) = upperGBuffer.at(i-1);
     }
 
     if (!partitioning_.ownPartitionContainsLeftBoundary())
@@ -518,7 +538,7 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
         MPI_Wait(&leftRequest, MPI_STATUS_IGNORE);
 
         for (int j = 1; j < nCellsY_+1; j++)
-            (*discretization_).f(0,j) = receiveLeftFBuffer[j-1];
+            (*discretization_).f(0,j) = leftFBuffer.at(j-1);
     }
 
     if (!partitioning_.ownPartitionContainsBottomBoundary())
@@ -526,7 +546,7 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
         MPI_Wait(&lowerRequest, MPI_STATUS_IGNORE);
 
         for (int i = 1; i < nCellsX_+1; i++)
-            (*discretization_).g(i,0) = receiveLowerGBuffer[i-1];
+            (*discretization_).g(i,0) = lowerGBuffer.at(i-1);
     }
 }
 
