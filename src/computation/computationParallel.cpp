@@ -292,7 +292,7 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
         MPI_Isend(rightUBuffer.data(), nCellsY_, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &rightURequest);
         MPI_Isend(rightVBuffer.data(), nCellsY_, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &rightVRequest);
 
-        MPI_Irecv(rrightUBuffer.data(), nCellsY_, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &rightURequest);
+        MPI_Irecv(rightUBuffer.data(), nCellsY_, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &rightURequest);
         MPI_Irecv(rightVBuffer.data(), nCellsY_, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &rightVRequest);
     }
 
