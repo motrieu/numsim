@@ -162,8 +162,12 @@ void Computation::computeTimeStepWidth()
         }
     }
 
-    const double dtConvectiveU = dx_ / uAbsMax;
-    const double dtConvectiveV = dy_ / vAbsMax;
+    double dtConvectiveU = settings_.maximumDt;
+    double dtConvectiveV = settings_.maximumDt;
+    if (uAbsMax > 0.0)
+        dtConvectiveU = dx_ / uAbsMax;
+    if (vAbsMax > 0.0)
+        dtConvectiveV = dy_ / vAbsMax;
 
     // makes sure that all stability conditions (the convective conditions and the diffusive condition) are fulfilled
     // and that the demanded maximal time step is not exceeded
