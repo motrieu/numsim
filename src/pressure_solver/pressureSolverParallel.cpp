@@ -94,7 +94,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         int k = 0;
         for (int j = pJBegin_+leftAndLowerOffset_[secondHalfStep]; j < pJEnd_; j+=2)
         {
-            sendLeftPBuffer.at(0) = (*discretization_).p(pIBegin_,j);
+            sendLeftPBuffer.at(k) = (*discretization_).p(pIBegin_,j);
             k++;
         }
 
