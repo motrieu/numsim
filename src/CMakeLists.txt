@@ -57,6 +57,7 @@ add_compile_options(-Wall -Wextra)
 # Set the version of the C++ standard to use, we use C++14, published in 2014
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -march=native -mtune=native -funroll-loops")
 
 message("CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
