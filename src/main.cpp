@@ -22,6 +22,8 @@ int main(int argc, char *argv[])
 
   for (int i=0; i<5; i++){
     std::cout << i << std::endl;
+    auto tbegin = high_resolution_clock::now();
+    
     MPI_Init(&argc, &argv);
 
     ComputationParallel computationParallel = ComputationParallel();
