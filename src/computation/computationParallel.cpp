@@ -85,7 +85,7 @@ void ComputationParallel::initialize(int argc, char *argv[])
         throw std::invalid_argument("Only SOR and GaussSeidel are supported as pressure solvers.");
     
     outputWriterParaviewParallel_ = std::make_unique<OutputWriterParaviewParallel>(discretization_, partitioning_);
-    outputWriterTextParallel_ = std::make_unique<OutputWriterTextParallel>(discretization_, partitioning_);
+    //outputWriterTextParallel_ = std::make_unique<OutputWriterTextParallel>(discretization_, partitioning_);
 
     nCellsX_ = (*discretization_).nCells()[0];
     nCellsY_ = (*discretization_).nCells()[1];

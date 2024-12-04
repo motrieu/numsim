@@ -26,7 +26,8 @@ void SORParallel::solve()
         // comunicate calculated pressures to neighboring processes such that in the next iteration/time step everything has been updated
         receiveAndSendPressuresFromAndToOtherProcesses(true);
 
-        resNormSquaredParallel = calcResNormSquaredParallel();
+        if (n%10 == 0)
+            resNormSquaredParallel = calcResNormSquaredParallel();
         n++;
 
         setBoundaryValuesOnDirichletParallel();
