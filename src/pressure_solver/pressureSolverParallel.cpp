@@ -150,7 +150,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         MPI_Wait(&leftRequest, MPI_STATUS_IGNORE);
         for (int j = pJBegin_; j < pJEnd_; j++)
         {
-            (*discretization_).p(pIBegin_-1,j) = leftPBuffer.at(j-pJBegin_);
+            (*discretization_).p(pIBegin_-1,j) = receiveLeftPBuffer.at(j-pJBegin_);
         }
     }
 
@@ -159,7 +159,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         MPI_Wait(&lowerRequest, MPI_STATUS_IGNORE);
         for (int i = pIBegin_; i < pIEnd_; i++)
         {
-            (*discretization_).p(i,pJBegin_-1) = lowerPBuffer.at(i-pIBegin_);
+            (*discretization_).p(i,pJBegin_-1) = receiveLowerPBuffer.at(i-pIBegin_);
         }
     }
 
@@ -168,7 +168,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         MPI_Wait(&rightRequest, MPI_STATUS_IGNORE);
         for (int j = pJBegin_; j < pJEnd_; j++)
         {
-            (*discretization_).p(pIEnd_,j) = rightPBuffer.at(j-pJBegin_);
+            (*discretization_).p(pIEnd_,j) = receiveRightPBuffer.at(j-pJBegin_);
         }
     }
 
@@ -177,7 +177,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         MPI_Wait(&upperRequest, MPI_STATUS_IGNORE);
         for (int i = pIBegin_; i < pIEnd_; i++)
         {
-            (*discretization_).p(i,pJEnd_) = upperPBuffer.at(i-pIBegin_);
+            (*discretization_).p(i,pJEnd_) = receiveUpperPBuffer.at(i-pIBegin_);
         }
     }
 }
