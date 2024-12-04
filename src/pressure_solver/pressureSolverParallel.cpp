@@ -75,13 +75,10 @@ void PressureSolverParallel::setBoundaryValuesOnDirichletParallel()
 
 void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool secondHalfStep)
 {   
-    MPI_Request sendLeftRequest;
+    std::vector<MPI_Request> sendRequests;
     MPI_Request receiveLeftRequest;
-    MPI_Request sendRightRequest;
     MPI_Request receiveRightRequest;
-    MPI_Request sendLowerRequest;
     MPI_Request receiveLowerRequest;
-    MPI_Request sendUpperRequest;
     MPI_Request receiveUpperRequest;
 
     std::vector<double> sendLeftPBuffer(sendLeftBufferLength_[secondHalfStep]);
@@ -102,7 +99,8 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
             k++;
         }
 
-        MPI_Isend(sendLeftPBuffer.data(), sendLeftBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendLeftRequest);
+        sendRequests.emplace_back();
+        MPI_Isend(sendLeftPBuffer.data(), sendLeftBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
 
         MPI_Irecv(receiveLeftPBuffer.data(), receiveLeftBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveLeftRequest); 
     }
@@ -116,7 +114,8 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
             k++;
         }
         
-        MPI_Isend(sendLowerPBuffer.data(), sendLowerBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendLowerRequest);
+        sendRequests.emplace_back();
+        MPI_Isend(sendLowerPBuffer.data(), sendLowerBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
 
         MPI_Irecv(receiveLowerPBuffer.data(), receiveLowerBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveLowerRequest); 
     }
@@ -130,7 +129,8 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
             k++;
         }
         
-        MPI_Isend(sendRightPBuffer.data(), sendRightBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRightRequest);
+        sendRequests.emplace_back();
+        MPI_Isend(sendRightPBuffer.data(), sendRightBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
 
         MPI_Irecv(receiveRightPBuffer.data(), receiveRightBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveRightRequest); 
     }
@@ -144,7 +144,8 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
             k++;
         }
         
-        MPI_Isend(sendUpperPBuffer.data(), sendUpperBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendUpperRequest);
+        sendRequests.emplace_back();
+        MPI_Isend(sendUpperPBuffer.data(), sendUpperBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &sendRequests.back());
 
         MPI_Irecv(receiveUpperPBuffer.data(), receiveUpperBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &receiveUpperRequest); 
     }
@@ -193,17 +194,7 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         }
     }
 
-    if (!partitioning_.ownPartitionContainsLeftBoundary())
-        MPI_Wait(&sendLeftRequest, MPI_STATUS_IGNORE);
-
-    if (!partitioning_.ownPartitionContainsBottomBoundary())
-        MPI_Wait(&sendLowerRequest, MPI_STATUS_IGNORE);
-
-    if (!partitioning_.ownPartitionContainsRightBoundary())
-        MPI_Wait(&sendRightRequest, MPI_STATUS_IGNORE);
-
-    if (!partitioning_.ownPartitionContainsTopBoundary())
-        MPI_Wait(&sendUpperRequest, MPI_STATUS_IGNORE);
+    MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE);
 }
 
 const double PressureSolverParallel::calcResNormSquaredParallel() const
