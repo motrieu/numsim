@@ -2,7 +2,7 @@
 
 #include <mpi.h>
 
-void ComputationParallel::runSimulation()
+void ComputationParallel::runSimulation(int resNormIntervall)
 {
     double time = 0.0;
     const double outputIntervall = 1.0;
@@ -38,7 +38,7 @@ void ComputationParallel::runSimulation()
 
         computeRightHandSide();
 
-        computePressure();
+        computePressure(resNormIntervall);
 
         computeVelocities();
 
@@ -515,9 +515,9 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
     }
 }
 
-void ComputationParallel::computePressure()
+void ComputationParallel::computePressure(int resNormIntervall)
 {
-    (*pressureSolverParallel_).solve();
+    (*pressureSolverParallel_).solve(resNormIntervall);
 }
 
 void ComputationParallel::computeVelocities()

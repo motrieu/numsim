@@ -218,7 +218,7 @@ void Computation::computeRightHandSide()
 
 void Computation::computePressure()
 {
-    (*pressureSolver_).solve();
+    (*pressureSolver_).solve(0);
 }
 
 void Computation::computeVelocities()

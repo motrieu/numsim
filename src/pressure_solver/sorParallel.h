@@ -17,7 +17,7 @@ public:
     SORParallel(std::shared_ptr<Discretization> discretization, double epsilon, int maximumNumberOfIterations, Partitioning partitioning, double omega);
 
     /// @brief implements the SOR-algorithm that solves for the new pressure p
-    virtual void solve();
+    void solve(int resNormIntervall);
 
 private:
 

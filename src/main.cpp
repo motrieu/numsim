@@ -15,11 +15,13 @@ int main(int argc, char *argv[])
 
   MPI_Init(&argc, &argv);
 
+  int resNormIntervall = std::stoi(argv[2]);
+
   ComputationParallel computationParallel = ComputationParallel();
 
   computationParallel.initialize(argc, argv);
 
-  computationParallel.runSimulation();
+  computationParallel.runSimulation(resNormIntervall);
 
   MPI_Finalize();
 

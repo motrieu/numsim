@@ -1,13 +1,14 @@
 #include "sorParallel.h"
 
 #include <mpi.h>
+#include <iostream>
 
 SORParallel::SORParallel(std::shared_ptr<Discretization> discretization, double epsilon, int maximumNumberOfIterations, Partitioning partitioning, double omega) :
     PressureSolverParallel(discretization, epsilon, maximumNumberOfIterations, partitioning), omega_(omega)
 {
 }
 
-void SORParallel::solve()
+void SORParallel::solve(int resNormIntervall)
 {
     int n = 0;
     double resNormSquaredParallel;
@@ -26,8 +27,11 @@ void SORParallel::solve()
         // comunicate calculated pressures to neighboring processes such that in the next iteration/time step everything has been updated
         receiveAndSendPressuresFromAndToOtherProcesses(true);
 
-        resNormSquaredParallel = calcResNormSquaredParallel();
+        if (n%resNormIntervall == 0)
+            resNormSquaredParallel = calcResNormSquaredParallel();
+        
         n++;
+        std::cout << resNormIntervall << std::endl;
 
         setBoundaryValuesOnDirichletParallel();
     }

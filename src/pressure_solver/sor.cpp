@@ -5,7 +5,7 @@ SOR::SOR(std::shared_ptr<Discretization> discretization, double epsilon, int max
 {
 }
 
-void SOR::solve()
+void SOR::solve(int resNormIntervall)
 {
     int n = 0;
     double resNormSquared;

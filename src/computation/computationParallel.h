@@ -11,7 +11,7 @@
 class ComputationParallel : public Computation
 {
 public:
-    void runSimulation();
+    void runSimulation(int resNormIntervall);
     void initialize(int argc, char *argv[]);
 
 private:
@@ -25,7 +25,7 @@ private:
     void computeTimeStepWidthParallel();
     void computePreliminaryVelocities();
     void receiveAndSendPreliminaryVelocitiesFromAndToOtherProcesses();
-    void computePressure();
+    void computePressure(int resNormIntervall);
     void computeVelocities();
     
 

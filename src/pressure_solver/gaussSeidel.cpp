@@ -1,6 +1,6 @@
 #include "gaussSeidel.h"
 
-void GaussSeidel::solve()
+void GaussSeidel::solve(int resNormIntervall)
 {
     int n = 0;
     double resNormSquared;

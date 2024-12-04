@@ -15,7 +15,7 @@ public:
     PressureSolver(std::shared_ptr<Discretization> discretization, double epsilon, int maximumNumberOfIterations);
 
     /// @brief solves for new pressure values, the new values are stored in the field variable p, implementation depends on which solver is used (GS or SOR)
-    virtual void solve() = 0;
+    virtual void solve(int resNormIntervall) = 0;
 
 protected:
 
