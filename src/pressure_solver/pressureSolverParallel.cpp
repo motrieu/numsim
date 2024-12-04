@@ -148,36 +148,44 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
     if (!partitioning_.ownPartitionContainsLeftBoundary())
     {
         MPI_Wait(&leftRequest, MPI_STATUS_IGNORE);
-        for (int j = pJBegin_; j < pJEnd_; j++)
+        int k = 0;
+        for (int j = pJBegin_+!leftAndLowerOffset_[secondHalfStep]; j < pJEnd_; j+=2)
         {
-            (*discretization_).p(pIBegin_-1,j) = receiveLeftPBuffer.at(j-pJBegin_);
+            (*discretization_).p(pIBegin_-1,j) = receiveLeftPBuffer.at(k);
+            k++;
         }
     }
 
     if (!partitioning_.ownPartitionContainsBottomBoundary())
     {
         MPI_Wait(&lowerRequest, MPI_STATUS_IGNORE);
-        for (int i = pIBegin_; i < pIEnd_; i++)
+        int k = 0;
+        for (int i = pIBegin_+!leftAndLowerOffset_[secondHalfStep]; i < pIEnd_; i+=2)
         {
-            (*discretization_).p(i,pJBegin_-1) = receiveLowerPBuffer.at(i-pIBegin_);
+            (*discretization_).p(i,pJBegin_-1) = receiveLowerPBuffer.at(k);
+            k++;
         }
     }
 
     if (!partitioning_.ownPartitionContainsRightBoundary())
     {
         MPI_Wait(&rightRequest, MPI_STATUS_IGNORE);
-        for (int j = pJBegin_; j < pJEnd_; j++)
+        int k = 0;
+        for (int j = pJBegin_+!rightOffset_[secondHalfStep]; j < pJEnd_; j+=2)
         {
-            (*discretization_).p(pIEnd_,j) = receiveRightPBuffer.at(j-pJBegin_);
+            (*discretization_).p(pIEnd_,j) = receiveRightPBuffer.at(k);
+            k++;
         }
     }
 
     if (!partitioning_.ownPartitionContainsTopBoundary())
     {
         MPI_Wait(&upperRequest, MPI_STATUS_IGNORE);
-        for (int i = pIBegin_; i < pIEnd_; i++)
+        int k = 0;
+        for (int i = pIBegin_+!upperOffset_[secondHalfStep]; i < pIEnd_; i+=2)
         {
-            (*discretization_).p(i,pJEnd_) = receiveUpperPBuffer.at(i-pIBegin_);
+            (*discretization_).p(i,pJEnd_) = receiveUpperPBuffer.at(k);
+            k++;
         }
     }
 }
