@@ -15,6 +15,7 @@ public:
     /// @param partitioning contains information about the partition of the physical domain needed for MPI
     PressureSolverParallel(std::shared_ptr<Discretization> discretization, double epsilon, int maximumNumberOfIterations, Partitioning partitioning);
 
+    /// @brief handles pressure values in the corner halo cells when Dirichlet boundary exists (needs to be done for output)
     void setDiagonalBoundaryValuesOnDirichletParallelForOutput();
 
 protected:
@@ -103,5 +104,6 @@ protected:
     /// @brief number of elements in y direction for this process (halo cells not included)
     int nCellsY_;
 
+    /// @brief number of global cells
     double numberOfValuesGlobal_;
 };
