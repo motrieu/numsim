@@ -5,6 +5,9 @@
 
 //#include <unistd.h>
 
+#include <chrono>
+using namespace std::chrono;
+
 int main(int argc, char *argv[])
 {
   /*{
@@ -13,15 +16,27 @@ int main(int argc, char *argv[])
       sleep(5);
   }*/
 
-  MPI_Init(&argc, &argv);
+  auto tSum = duration_cast<microseconds>(high_resolution_clock::now() - high_resolution_clock::now());
 
-  ComputationParallel computationParallel = ComputationParallel();
+  std::cout << tSum.count() << std::endl;
 
-  computationParallel.initialize(argc, argv);
+  for (int i=0; i<5; i++){
+    std::cout << i << std::endl;
+    MPI_Init(&argc, &argv);
 
-  computationParallel.runSimulation();
+    ComputationParallel computationParallel = ComputationParallel();
 
-  MPI_Finalize();
+    computationParallel.initialize(argc, argv);
+
+    computationParallel.runSimulation();
+
+    MPI_Finalize();
+
+    tSum += duration_cast<microseconds>(high_resolution_clock::now() - tbegin);
+  }
+
+  std::cout << tSum.count() << std::endl;
+
 
   return EXIT_SUCCESS;
 }
