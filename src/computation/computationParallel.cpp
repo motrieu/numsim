@@ -1,6 +1,7 @@
 #include "computationParallel.h"
 
 #include <mpi.h>
+#include <iostream>
 
 void ComputationParallel::runSimulation()
 {
@@ -43,6 +44,8 @@ void ComputationParallel::runSimulation()
         computeVelocities();
 
         time += dt_;
+
+        std::cout << (*pressureSolverParallel_).getNumberOfIterations() << std::endl;
     }
     
     receiveAndSendVelocitiesFromAndToOtherProcesses();

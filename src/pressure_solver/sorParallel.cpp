@@ -1,7 +1,6 @@
 #include "sorParallel.h"
 
 #include <mpi.h>
-#include <iostream>
 
 SORParallel::SORParallel(std::shared_ptr<Discretization> discretization, double epsilon, int maximumNumberOfIterations, Partitioning partitioning, double omega) :
     PressureSolverParallel(discretization, epsilon, maximumNumberOfIterations, partitioning), omega_(omega)
@@ -63,7 +62,7 @@ void SORParallel::solve()
     //Termination criteria: either number of maximal iterations is reached or residual squared norm is less or equal to given threshold
     while ((n < maximumNumberOfIterations_) && (resNormSquaredParallel > numberOfValuesGlobal_*epsilonSquared_));
     
-    std::cout << n << std::endl;
+    numberIterations_ = n;
 }
 
 void SORParallel::solveHalfStep(bool leftAndLowerOffset)
@@ -83,4 +82,9 @@ void SORParallel::solveHalfStep(bool leftAndLowerOffset)
         }
         rowOffset = !rowOffset;
     }
+}
+
+int SORParallel::getNumberOfIterations()
+{
+    return numberIterations_;
 }

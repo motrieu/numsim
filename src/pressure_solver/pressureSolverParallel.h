@@ -17,6 +17,8 @@ public:
 
     void setDiagonalBoundaryValuesOnDirichletParallelForOutput();
 
+    virtual int getNumberOfIterations() = 0;
+
 protected:
 
     /// @brief if the partition contains Dirichlet boundaries, then for each of them the boundary values for

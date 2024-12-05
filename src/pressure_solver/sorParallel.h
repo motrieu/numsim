@@ -19,6 +19,8 @@ public:
     /// @brief implements the SOR-algorithm that solves for the new pressure p
     virtual void solve();
 
+    virtual int getNumberOfIterations();
+
 private:
 
     /// @brief computes pressure either on white or black tiles of the checker board used for parallelization of pressure communication
@@ -29,5 +31,6 @@ private:
     double omega_;
 
     int startPDifferences_;
+    int numberIterations_;
 
 };
