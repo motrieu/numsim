@@ -112,6 +112,7 @@ void ComputationParallel::applyBCOnDirichletBoundary()
 
     if (partitioning_.ownPartitionContainsBottomBoundary())
     {
+        // shiftIBeginV and shiftIEndV handle priority of boundary conditions
         int shiftIBeginV = 0;
         int shiftIEndV = 0;
         if (!partitioning_.ownPartitionContainsLeftBoundary())
@@ -126,6 +127,7 @@ void ComputationParallel::applyBCOnDirichletBoundary()
 
     if (partitioning_.ownPartitionContainsTopBoundary())
     {
+        // shiftIBeginV and shiftIEndV handle priority of boundary conditions
         int shiftIBeginV = 0;
         int shiftIEndV = 0;
         if (!partitioning_.ownPartitionContainsLeftBoundary())
@@ -196,6 +198,7 @@ void ComputationParallel::applyBCInHaloCellsAtDirichletBoundary()
 
     if (partitioning_.ownPartitionContainsBottomBoundary())
     {
+        // shiftIBeginU and shiftIEndU handle priority of boundary conditions
         int shiftIBeginU = 0;
         int shiftIEndU = 0;
         if (!partitioning_.ownPartitionContainsLeftBoundary())
@@ -213,6 +216,7 @@ void ComputationParallel::applyBCInHaloCellsAtDirichletBoundary()
 
     if (partitioning_.ownPartitionContainsTopBoundary())
     {
+        // shiftIBeginU and shiftIEndU handle priority of boundary conditions
         int shiftIBeginU = 0;
         int shiftIEndU = 0;
         if (!partitioning_.ownPartitionContainsLeftBoundary())
@@ -235,6 +239,7 @@ void ComputationParallel::receiveAndSendDiagonalPressureFromAndToOtherProcess()
 
     std::vector<double> diagonalPBuffer(1);
 
+    // if the current rank has a lower-left neighbour, the own p(1,1)-value is sent to that neighbour
     if ((!partitioning_.ownPartitionContainsLeftBoundary()) && (!partitioning_.ownPartitionContainsBottomBoundary()))
     {
         diagonalPBuffer[0] = (*discretization_).p(1,1);
@@ -242,12 +247,13 @@ void ComputationParallel::receiveAndSendDiagonalPressureFromAndToOtherProcess()
         MPI_Isend(diagonalPBuffer.data(), 1, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo()-1, 0, MPI_COMM_WORLD, &diagonalRequest);
     }
 
+    // if the current rank has an upper-right neighbour, the current rank receives the p(1,1)-value from that neighbour
     if ((!partitioning_.ownPartitionContainsRightBoundary()) && (!partitioning_.ownPartitionContainsTopBoundary()))
     {
         MPI_Irecv(diagonalPBuffer.data(), 1, MPI_DOUBLE, partitioning_.topNeighbourRankNo()+1, 0, MPI_COMM_WORLD, &diagonalRequest);
     }
 
-
+    // the received p-value is then stored at p(N+1,N+1)
     if ((!partitioning_.ownPartitionContainsRightBoundary()) && (!partitioning_.ownPartitionContainsTopBoundary()))
     {
         MPI_Wait(&diagonalRequest, MPI_STATUS_IGNORE);
@@ -264,6 +270,9 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
     MPI_Request upperRequest;
 
     std::vector<double> leftUVBuffer(2*nCellsY_);
+
+    // if current rank does not contain left Dirichlet boundary, 
+    // then u and v need to be communicated between the current rank and its left neighbour rank
     if (!partitioning_.ownPartitionContainsLeftBoundary())
     {
         for (int j = 1; j < nCellsY_+1; j++)
@@ -278,6 +287,9 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
     }
 
     std::vector<double> rightUVBuffer(2*nCellsY_);
+
+    // if current rank does not contain right Dirichlet boundary, 
+    // then u and v need to be communicated between the current rank and its right neighbour rank
     if (!partitioning_.ownPartitionContainsRightBoundary())
     {
         for (int j = 1; j < nCellsY_+1; j++)
@@ -292,6 +304,9 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
     }
 
     std::vector<double> lowerUVBuffer(2*nCellsX_);
+
+    // if current rank does not contain bottom Dirichlet boundary, 
+    // then u and v need to be communicated between the current rank and its lower neighbour rank
     if (!partitioning_.ownPartitionContainsBottomBoundary())
     {
         for (int i = 1; i < nCellsX_+1; i++)
@@ -306,6 +321,9 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
     }
 
     std::vector<double> upperUVBuffer(2*nCellsX_);
+
+    // if current rank does not contain top Dirichlet boundary, 
+    // then u and v need to be communicated between the current rank and its upper neighbour rank
     if (!partitioning_.ownPartitionContainsTopBoundary())
     {
         for (int i = 1; i < nCellsX_+1; i++)
@@ -318,6 +336,8 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
 
         MPI_Irecv(upperUVBuffer.data(), 2*nCellsX_, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &upperRequest);
     }
+
+    // received values are now written to the right place
 
     if (!partitioning_.ownPartitionContainsLeftBoundary())
     {
@@ -359,13 +379,14 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
         }  
     }
 
-
+    // diagonal communication
     MPI_Request leftUpperDiagonalRequest;
     MPI_Request rightLowerDiagonalRequest;
 
     std::vector<double> leftUpperDiagonalBuffer(1);
     std::vector<double> rightLowerDiagonalBuffer(1);
 
+    // if current rank has an upper-left neighbour, v(1,nCellsY_) needs to be communicated since it is needed in the donor cell scheme
     if (!partitioning_.ownPartitionContainsLeftBoundary() && !partitioning_.ownPartitionContainsTopBoundary())
     {
         leftUpperDiagonalBuffer[0] = (*discretization_).v(1,nCellsY_);
@@ -375,6 +396,7 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
         MPI_Irecv(leftUpperDiagonalBuffer.data(), 1, MPI_DOUBLE, partitioning_.topNeighbourRankNo()-1, 0, MPI_COMM_WORLD, &leftUpperDiagonalRequest);
     }
     
+    // if current rank has a lower-right neighbour, u(nCellsX_,1) needs to be communicated since it is needed in the donor cell scheme
     if (!partitioning_.ownPartitionContainsRightBoundary() && !partitioning_.ownPartitionContainsBottomBoundary())
     {
         rightLowerDiagonalBuffer[0] = (*discretization_).u(nCellsX_,1);
@@ -461,6 +483,7 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
     std::vector<double> sendRightFBuffer(nCellsY_);
     std::vector<double> sendUpperGBuffer(nCellsX_);
 
+    // if current rank does not have a right Dirichlet boundary, then F on the local right boundary is sent to the right neighbour
     if (!partitioning_.ownPartitionContainsRightBoundary())
     {
         for (int j = 1; j < nCellsY_+1; j++)
@@ -469,6 +492,7 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
         MPI_Isend(sendRightFBuffer.data(), nCellsY_, MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &rightRequest);
     }
 
+    // if current rank does not have a top Dirichlet boundary, then G on the local top boundary is sent to the upper neighbour
     if (!partitioning_.ownPartitionContainsTopBoundary())
     {
         for (int i = 1; i < nCellsX_+1; i++)
@@ -477,11 +501,13 @@ void ComputationParallel::receiveAndSendPreliminaryVelocitiesFromAndToOtherProce
         MPI_Isend(sendUpperGBuffer.data(), nCellsX_, MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &upperRequest);
     }
 
+    // if current rank does not have a left Dirichlet boundary, then F on the local left boundary is received from the left neighbour
     if (!partitioning_.ownPartitionContainsLeftBoundary())
     {
         MPI_Irecv(receiveLeftFBuffer.data(), nCellsY_, MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &leftRequest);
     }
 
+    // if current rank does not have a bottom Dirichlet boundary, then G on the local bottom boundary is received from the bottom neighbour
     if (!partitioning_.ownPartitionContainsBottomBoundary())
     {
         MPI_Irecv(receiveLowerGBuffer.data(), nCellsX_, MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &lowerRequest);
@@ -522,6 +548,7 @@ void ComputationParallel::computePressure()
 
 void ComputationParallel::computeVelocities()
 {
+    // shift parameters determine whether new velocities u and v also need to be calculated at local boundary of the current rank
     int shiftIEndU = 0;
     int shiftJEndV = 0;
     if (!partitioning_.ownPartitionContainsRightBoundary())
