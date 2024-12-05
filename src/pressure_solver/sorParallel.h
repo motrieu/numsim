@@ -28,4 +28,6 @@ private:
     /// @brief weight for correction term, for omega=1 one receives the Gauss-Seidel algorithm
     double omega_;
 
+    int startPDifferences_;
+
 };

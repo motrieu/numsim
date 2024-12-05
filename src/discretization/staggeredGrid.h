@@ -31,6 +31,8 @@ public:
     /// @brief  get field variable p
     /// @return reference to field variable p
     const FieldVariable& p() const;
+
+    const FieldVariable& pOld() const;
  	
 
     /// @brief get constant value of u in element i,j
@@ -68,6 +70,18 @@ public:
     /// @param j index of element in y-direction
     /// @return reference to value of p in element with indices i,j
     double&	p(int i, int j);
+
+    /// @brief get constant value of p in element i,j
+    /// @param i index of element in x-direction
+    /// @param j index of element in y-direction
+    /// @return constant value of p in element with indices i,j
+    double pOld(int i, int j) const;
+ 
+    /// @brief get reference to value of p in element i,j
+    /// @param i index of element in x-direction
+    /// @param j index of element in y-direction
+    /// @return reference to value of p in element with indices i,j
+    double&	pOld(int i, int j);
 
     /// @brief get reference to value of the rhs in element i,j
     /// @param i index of element in x-direction
@@ -160,6 +174,8 @@ protected:
 
     /// @brief stores the values of the pressure, lives in the centre of each cell
     FieldVariable p_;
+
+    FieldVariable pOld_;
 
     /// @brief stores the values of the preliminary velocity in x-direction, lives on the right face of each cell
     FieldVariable f_;

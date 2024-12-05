@@ -6,6 +6,7 @@ StaggeredGrid::StaggeredGrid(std::array<int,2> nCells, std::array<double,2> mesh
     u_(FieldVariable({nCells[0]+2, nCells[1]+2}, {0.0, -0.5*meshWidth[1]}, meshWidth)), // first (i,j=0) u node (halo node) lives half a y-mesh width below the cartesian origin (x,y=0)
     v_(FieldVariable({nCells[0]+2, nCells[1]+2}, {-0.5*meshWidth[0], 0.0}, meshWidth)), // first (i,j=0) v node (halo node) lives half a x-mesh width left to the cartesian origin (x,y=0)
     p_(FieldVariable({nCells[0]+2, nCells[1]+2}, {-0.5*meshWidth[0], -0.5*meshWidth[1]}, meshWidth)), // first (i,j=0) p node (halo node) lives half a x- and half a y-mesh width apart from the cartesian origin (x,y=0)
+    pOld_(FieldVariable({nCells[0]+2, nCells[1]+2}, {-0.5*meshWidth[0], -0.5*meshWidth[1]}, meshWidth)),
     f_(FieldVariable({nCells[0]+2, nCells[1]+2}, {0.0, -0.5*meshWidth[1]}, meshWidth)), // first (i,j=0) f node (halo node) lives half a y-mesh width below the cartesian origin (x,y=0) (analog to u)
     g_(FieldVariable({nCells[0]+2, nCells[1]+2}, {-0.5*meshWidth[0], 0.0}, meshWidth)), // first (i,j=0) g node (halo node) lives half a x-mesh width left to the cartesian origin (x,y=0) (analog to v)
     rhs_(FieldVariable({nCells[0]+2, nCells[1]+2}, {-0.5*meshWidth[0], -0.5*meshWidth[1]}, meshWidth)) // first (i,j=0) rhs node (halo node) lives half a x- and half a y-mesh width apart from the cartesian origin (x,y=0) (analog to p)
@@ -37,6 +38,11 @@ const FieldVariable& StaggeredGrid::p() const
     return p_;
 }
 
+const FieldVariable& StaggeredGrid::pOld() const
+{
+    return pOld_;
+}
+
 double StaggeredGrid::u(int i, int j) const
 {
     return u_(i,j);
@@ -65,6 +71,16 @@ double StaggeredGrid::p(int i, int j) const
 double& StaggeredGrid::p(int i, int j)
 {
     return p_(i,j);
+}
+
+double StaggeredGrid::pOld(int i, int j) const
+{
+    return pOld_(i,j);
+}
+ 
+double& StaggeredGrid::pOld(int i, int j)
+{
+    return pOld_(i,j);
 }
 
 double&	StaggeredGrid::rhs(int i, int j)
