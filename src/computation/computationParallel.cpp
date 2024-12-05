@@ -9,6 +9,9 @@ void ComputationParallel::runSimulation()
     const double outputIntervall = 1.0;
     double timeNextOutput = outputIntervall;
 
+    int totalNumIt = 0;
+    int numTimesteps = 0;
+
     while (time < settings_.endTime)
     {
         receiveAndSendVelocitiesFromAndToOtherProcesses();
@@ -45,8 +48,15 @@ void ComputationParallel::runSimulation()
 
         time += dt_;
 
-        std::cout << (*pressureSolverParallel_).getNumberOfIterations() << std::endl;
+        if (partitioning_.ownRankNo() == 0)
+        {
+            std::cout << (*pressureSolverParallel_).getNumberOfIterations() << std::endl;
+            totalNumIt += (*pressureSolverParallel_).getNumberOfIterations();
+            numTimesteps += 1;
+        }
     }
+    if (partitioning_.ownRankNo() == 0)
+        std::cout << totalNumIt/numTimesteps << std::endl;
     
     receiveAndSendVelocitiesFromAndToOtherProcesses();
     (*pressureSolverParallel_).setDiagonalBoundaryValuesOnDirichletParallelForOutput();
