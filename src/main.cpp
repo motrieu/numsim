@@ -1,13 +1,27 @@
-#include "computation/computation.h"
+#include "computation/computationParallel.h"
+
+#include <array>
+#include <mpi.h>
+
+//#include <unistd.h>
 
 int main(int argc, char *argv[])
 {
+  /*{
+    int i=0;
+    while (i == 0)
+      sleep(5);
+  }*/
 
-  Computation computation = Computation();
+  MPI_Init(&argc, &argv);
 
-  computation.initialize(argc, argv);
+  ComputationParallel computationParallel = ComputationParallel();
 
-  computation.runSimulation();
+  computationParallel.initialize(argc, argv);
+
+  computationParallel.runSimulation();
+
+  MPI_Finalize();
 
   return EXIT_SUCCESS;
 }

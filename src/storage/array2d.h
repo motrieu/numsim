@@ -22,6 +22,13 @@ public:
   //! get the value at coordinate (i,j), declared const, i.e. it is not possible to change the value
   double operator()(int i, int j) const;
 
+  //! set all entries of field variable to zero
+  //! is used in output_writer_paraview_parallel to prepare global field variables for MPI_Reduce via summation for combining all partitions into one output
+  void setToZero();
+
+  //! converts bufferData to void* which is needed by MPI
+  void* data();
+
 protected:
 
   std::vector<double> data_;  //< storage array values, in row-major order

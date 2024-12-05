@@ -2,8 +2,11 @@
 
 
 PressureSolver::PressureSolver(std::shared_ptr<Discretization> discretization, double epsilon, int maximumNumberOfIterations) :
-    discretization_(discretization), epsilon_(epsilon), maximumNumberOfIterations_(maximumNumberOfIterations)
+    discretization_(discretization), epsilonSquared_(epsilon*epsilon), maximumNumberOfIterations_(maximumNumberOfIterations)
 {
+    dxSquared_ = (*discretization_).dx() * (*discretization_).dx();
+    dySquared_ = (*discretization_).dy() * (*discretization_).dy();
+    numberOfValues_ = ((*discretization_).nCells()[0]) * ((*discretization_).nCells()[1]);
 }
 
 void PressureSolver::setBoundaryValues() 

@@ -23,16 +23,25 @@ protected:
     void setBoundaryValues();
 
     /// @brief calculates squared residual norm of pressure p, is used as termination criterium
-    /// @return squared residual norm of pressure p
+    /// @return squared residual norm of pressure p in the current process
     const double calcResNormSquared() const;
 
     /// @brief shared pointer to the discretization, can either point towards the Central Difference or Donor Cell scheme
     std::shared_ptr<Discretization> discretization_;
 
-    /// @brief threshold that is used for the termination criterium in order to find out if the solver has converged
-    double epsilon_;
+    /// @brief squared threshold that is used for the termination criterium in order to find out if the solver has converged
+    double epsilonSquared_;
 
     /// @brief maximal number of iterations used as termination criterium
     int	maximumNumberOfIterations_;
+
+    /// @brief squared mesh width in x-direction
+    double dxSquared_;
+
+    /// @brief squared mesh width in y-direction
+    double dySquared_;
+
+    /// @brief number of cells of the physical domain of the current process
+    double numberOfValues_;
 
 };
