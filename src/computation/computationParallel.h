@@ -24,17 +24,17 @@ public:
     void initialize(int argc, char *argv[]);
 
 private:
-    /// @brief checks if current rank contains Dirichlet boundary
-    ///        sets boundary conditions of u and v on the local boundary based on given Dirichlet conditions
+    /// @brief if current rank contains Dirichlet boundaries, boundary conditions of u and v
+    ///        are set on the local boundary based on given Dirichlet conditions
     ///        handles priority of boundary conditions by introducing shifting parameters for v
     void applyBCOnDirichletBoundary();
 
-    /// @brief checks if current rank contains Dirichlet boundary
-    ///        sets boundary conditions of f and g on the local boundary based on given Dirichlet conditions
+    /// @brief if current rank contains Dirichlet boundary, boundary conditions of F and G
+    ///        are set on the local boundary based on given Dirichlet conditions
     void applyPreliminaryBCOnDirichletBoundary();
 
-    /// @brief checks if current rank contains Dirichlet boundary
-    ///        sets boundary conditions of u and v in halo cells based on given Dirichlet conditions and inner cell values
+    /// @brief if current rank contains Dirichlet boundary, boundary conditions of u and v
+    ///        are set in halo cells based on given Dirichlet conditions and inner cell values
     ///        handles priority of boundary conditions by introducing shifting parameters for u
     void applyBCInHaloCellsAtDirichletBoundary();
 
@@ -56,11 +56,12 @@ private:
     /// @brief computes preliminary velocities F and G
     ///        if current rank does not have a right Dirichlet boundary, then F is also calculated on the right boundary of that rank
     ///        if current rank does not have a top Dirichlet boundary, then G is also calculated on the upper boundary of that rank
+    ///        otherwise it has been already set on the Dirichlet boundary by applyPreliminaryBCOnDirichletBoundary() once in the beginning since they don't change
     void computePreliminaryVelocities();
 
     /// @brief F and G communication
-    ///        checks if current rank contains Dirichlet boundaries
-    ///        if current rank does not contain Dirichlet boundary, then F or G need to be sent or received from one of its neighbours
+    ///        if current rank does not contain top and/or right Dirichlet boundaries, then G and/or F need to be sent to those neighbours
+    ///        if current rank does not contain bottom and/or left Dirichlet boundaries, then G and/or F need to be received from those neighbours
     void receiveAndSendPreliminaryVelocitiesFromAndToOtherProcesses();
 
     /// @brief computes pressure by using the selected parallel pressure solver SOR-algorithm with checker board pattern

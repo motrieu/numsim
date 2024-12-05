@@ -92,6 +92,8 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
     std::vector<double> sendUpperPBuffer(sendUpperBufferLength_[secondHalfStep]);
     std::vector<double> receiveUpperPBuffer(receiveUpperBufferLength_[secondHalfStep]);
 
+    // if current rank does not contain left Dirichlet boundary, 
+    // then p needs to be communicated between the current rank and its left neighbour rank
     if (!partitioning_.ownPartitionContainsLeftBoundary())
     {
         int k = 0;
@@ -106,6 +108,8 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         MPI_Irecv(receiveLeftPBuffer.data(), receiveLeftBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.leftNeighbourRankNo(), 0, MPI_COMM_WORLD, &leftRequest); 
     }
 
+    // if current rank does not contain lower Dirichlet boundary, 
+    // then p needs to be communicated between the current rank and its lower neighbour rank
     if (!partitioning_.ownPartitionContainsBottomBoundary())
     {
         int k = 0;
@@ -120,6 +124,8 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         MPI_Irecv(receiveLowerPBuffer.data(), receiveLowerBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.bottomNeighbourRankNo(), 0, MPI_COMM_WORLD, &lowerRequest); 
     }
 
+    // if current rank does not contain right Dirichlet boundary, 
+    // then p needs to be communicated between the current rank and its right neighbour rank
     if (!partitioning_.ownPartitionContainsRightBoundary())
     {
         int k = 0;
@@ -134,6 +140,8 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
         MPI_Irecv(receiveRightPBuffer.data(), receiveRightBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.rightNeighbourRankNo(), 0, MPI_COMM_WORLD, &rightRequest); 
     }
 
+    // if current rank does not contain upper Dirichlet boundary, 
+    // then p needs to be communicated between the current rank and its upper neighbour rank
     if (!partitioning_.ownPartitionContainsTopBoundary())
     {
         int k = 0;
@@ -147,6 +155,9 @@ void PressureSolverParallel::receiveAndSendPressuresFromAndToOtherProcesses(bool
 
         MPI_Irecv(receiveUpperPBuffer.data(), receiveUpperBufferLength_[secondHalfStep], MPI_DOUBLE, partitioning_.topNeighbourRankNo(), 0, MPI_COMM_WORLD, &upperRequest); 
     }
+
+
+    // received values are now written to the right place
 
     if (!partitioning_.ownPartitionContainsLeftBoundary())
     {
