@@ -47,16 +47,7 @@ void ComputationParallel::runSimulation()
         computeVelocities();
 
         time += dt_;
-
-        if (partitioning_.ownRankNo() == 0)
-        {
-            std::cout << (*pressureSolverParallel_).getNumberOfIterations() << std::endl;
-            totalNumIt += (*pressureSolverParallel_).getNumberOfIterations();
-            numTimesteps += 1;
-        }
     }
-    if (partitioning_.ownRankNo() == 0)
-        std::cout << totalNumIt/numTimesteps << std::endl;
     
     receiveAndSendVelocitiesFromAndToOtherProcesses();
     (*pressureSolverParallel_).setDiagonalBoundaryValuesOnDirichletParallelForOutput();

@@ -5,7 +5,7 @@
 SORParallel::SORParallel(std::shared_ptr<Discretization> discretization, double epsilon, int maximumNumberOfIterations, Partitioning partitioning, double omega) :
     PressureSolverParallel(discretization, epsilon, maximumNumberOfIterations, partitioning), omega_(omega)
 {
-    startPDifferences_ = 1;
+    startPDifferences_ = 2;
 }
 
 void SORParallel::solve()
@@ -21,8 +21,10 @@ void SORParallel::solve()
             {
                 const double p = (*discretization_).p(i,j);
                 const double pOld = (*discretization_).pOld(i,j);
-                (*discretization_).p(i,j) = p + 0.8 * (p - pOld);
+                const double pOld2 = (*discretization_).pOld2(i,j);
+                (*discretization_).p(i,j) = p + 0.8 * (1.5*p - pOld + 0.5*pOld2);
                 (*discretization_).pOld(i,j) = p;
+                (*discretization_).pOld2(i,j) = pOld;
             }
         }
     }
@@ -33,7 +35,9 @@ void SORParallel::solve()
             for (int j=pJBegin_; j < pJEnd_; j++)
             {
                 const double p = (*discretization_).p(i,j);
+                const double pOld = (*discretization_).pOld(i,j);
                 (*discretization_).pOld(i,j) = p;
+                (*discretization_).pOld2(i,j) = pOld;
             }
         }
         startPDifferences_--;
