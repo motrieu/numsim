@@ -14,18 +14,18 @@ void ComputationParallel::runSimulation()
 
         if (time >= timeNextOutput)
         {
-            // first
+            // call to ensure that p is correctly interpolated at Dirichlet boundaries
             (*pressureSolverParallel_).setDiagonalBoundaryValuesOnDirichletParallelForOutput();
-            // second and override the needed corners
+            // call to ensure that p is correctly interpolated at corners between neighbouring ranks
             receiveAndSendDiagonalPressureFromAndToOtherProcess();
 
             (*outputWriterParaviewParallel_).writeFile(time);
-            //(*outputWriterTextParallel_).writeFile(time);
             timeNextOutput += outputIntervall;
         }
-
+        
         applyBCInHaloCellsAtDirichletBoundary();
 
+        // time step width needs to be calculated each time step to ensure stability
         computeTimeStepWidthParallel();
 
         // ensures that the last time step leads exactly to the demanded end time
@@ -76,21 +76,21 @@ void ComputationParallel::initialize(int argc, char *argv[])
     else
         discretization_ = std::make_shared<CentralDifferences>(partitioning_.nCellsLocal(), meshWidth_);
 
-    // either the Gauss-Seidel or the SOR algorithm is used
+    // SOR algorithm is used for parallel
     if (settings_.pressureSolver == "SOR")
         pressureSolverParallel_ = std::make_unique<SORParallel>(discretization_, settings_.epsilon, settings_.maximumNumberOfIterations, partitioning_, settings_.omega);
-    //else if (settings_.pressur<eSolver == "GaussSeidel")
-    //    pressureSolver_ = std::make_unique<GaussSeidel>(discretization_, settings_.epsilon, settings_.maximumNumberOfIterations);
     else
-        throw std::invalid_argument("Only SOR and GaussSeidel are supported as pressure solvers.");
+        throw std::invalid_argument("Only SOR is supported as parallel pressure solver.");
     
     outputWriterParaviewParallel_ = std::make_unique<OutputWriterParaviewParallel>(discretization_, partitioning_);
-    //outputWriterTextParallel_ = std::make_unique<OutputWriterTextParallel>(discretization_, partitioning_);
-
+    
     nCellsX_ = (*discretization_).nCells()[0];
     nCellsY_ = (*discretization_).nCells()[1];
 
+    // boundary conditions for u and v on the boundary faces only need to be set once in the beginning of the computation since they are constant over time
     applyBCOnDirichletBoundary();
+
+    // boundary conditions for F and G on the boundary faces only need to be set once in the beginning of the computation since they are constant over time
     applyPreliminaryBCOnDirichletBoundary();
 }
 
@@ -379,7 +379,7 @@ void ComputationParallel::receiveAndSendVelocitiesFromAndToOtherProcesses()
         }  
     }
 
-    // diagonal communication
+    // diagonal communication for donor-cell scheme
     MPI_Request leftUpperDiagonalRequest;
     MPI_Request rightLowerDiagonalRequest;
 
