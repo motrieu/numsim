@@ -20,17 +20,20 @@ internalField   uniform (0 0 0);
 
 boundaryField
 {
+    // upper boundary with INFLOW Dirichlet condition
     movingWall
     {
         type            fixedValue;
         value           uniform (1 0 0);
     }
 
+    // left and right boundary with NOSLIP condition
     fixedSideWalls
     {
         type            noSlip;
     }
 
+    // lower boundary with NOSLIP condition
     fixedBottomWall
     {
         type            noSlip;

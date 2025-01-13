@@ -20,17 +20,20 @@ internalField   uniform 0;
 
 boundaryField
 {
+    // left boundary where fluid flows in
     leftWall
     {
         type            zeroGradient;
     }
 
+    // right boundary where fluid flows out (PRESSURE)
     rightWall
     {
         type            fixedValue;
         value           uniform 0;
     }
 
+    // walls (lower, upper boundary and obstacle)
     fixedWalls
     {
         type            zeroGradient;

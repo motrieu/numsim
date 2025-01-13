@@ -39,6 +39,7 @@ edges
 
 boundary
 (
+    // upper boundary
     movingWall
     {
         type wall;
@@ -47,6 +48,8 @@ boundary
             (3 7 6 2)
         );
     }
+
+    // left, right and lower boundary
     fixedWalls
     {
         type wall;
@@ -57,6 +60,7 @@ boundary
             (1 5 4 0)
         );
     }
+    
     frontAndBack
     {
         type empty;

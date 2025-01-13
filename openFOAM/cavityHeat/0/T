@@ -20,18 +20,21 @@ internalField   uniform 300;
 
 boundaryField
 {
+    // upper boundary with Dirichlet condition
     movingWall
     {
         type            fixedValue;
         value           uniform 301;
     }
 
+    // lower boundary with Dirichlet condition
     fixedBottomWall
     {
         type            fixedValue;
         value           uniform 300;
     }
 
+    // left and right boundary for adiabatic wall
     fixedSideWalls
     {
         type            zeroGradient;

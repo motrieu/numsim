@@ -20,7 +20,7 @@ internalField   uniform (0 0 0);
 
 boundaryField
 {
-    // parabolic inflow
+    // left boundary with parabolic INFLOW condition
     leftWall
     {
         type            codedFixedValue;
@@ -46,11 +46,13 @@ boundaryField
         #};
     }
 
+    // right boundary with OUTFLOW condition
     rightWall
     {
         type            zeroGradient;
     }
 
+    // NOSLIP walls (upper, lower boundary and step)
     fixedWalls
     {
         type            noSlip;
