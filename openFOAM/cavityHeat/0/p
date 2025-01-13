@@ -20,16 +20,19 @@ internalField   uniform 0;
 
 boundaryField
 {
+    // upper boundary
     movingWall
     {
         type            zeroGradient;
     }
 
+    // left, right boundary
     fixedSideWalls
     {
         type            zeroGradient;
     }
 
+    // lower boundary
     fixedBottomWall
     {
         type            zeroGradient;

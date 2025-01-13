@@ -14,6 +14,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// viscosity: is defined by Re=1000 and uMax=1m/s, Lch=2m
 nu              0.002;
 
 
