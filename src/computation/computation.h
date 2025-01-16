@@ -6,6 +6,7 @@
 
 #include "settings/settings.h"
 #include "discretization/discretization.h"
+#include "discretization/boundaryConditions.h"
 #include "discretization/donorCell.h"
 #include "discretization/centralDifferences.h"
 #include "pressure_solver/pressureSolver.h"
@@ -33,24 +34,9 @@ public:
     void runSimulation();
 
 private:
-
-    /// @brief applies boundary conditions of u and v on the actual boundary faces
-    ///        manipulates the in the data structure stored values such that they are overwritten
-    ///        is only called once in the beginning of the computation
-    ///        needs to be called before applyPreliminaryBCOnBoundary(), since it depends on the values set in applyBCOnBoundary()
-    void applyBCOnBoundary();
-
-    /// @brief applies boundary conditions of u and v in halo cells
-    ///        manipulates the in the data structure stored values such that they are overwritten
-    ///        has to be called in the beginning of every time step
-    void applyBCInHaloCells();
-
-    /// @brief applies boundary conditions of F and G on the actual boundary faces
-    ///        manipulates the in the data structure stored values such that they are overwritten
-    ///        is only called once in the beginning of the computation
-    ///        the function applyBCOnBoundary() needs to be called prior to applyPreliminaryBCOnBoundary()
-    void applyPreliminaryBCOnBoundary();
     
+    void applyBoundaryConditions();
+
     /// @brief computes time step width for each time step such that the stability (diffusive and convective) is ensured
     void computeTimeStepWidth();
  	
@@ -75,6 +61,8 @@ private:
  
     /// @brief shared pointer to the discretization, can either point towards the Central Difference or Donor Cell scheme
     std::shared_ptr<Discretization> discretization_;
+
+    BoundaryConditions bc_;
     
     /// @brief shared pointer to the pressure solver, can either point towards the Gauss-Seidel or SOR algorithm
     std::unique_ptr<PressureSolver> pressureSolver_;

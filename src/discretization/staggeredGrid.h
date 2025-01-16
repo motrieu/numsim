@@ -1,6 +1,7 @@
 #pragma once
 
 #include "storage/fieldVariable.h"
+#include "storage/array2DInt.h"
 #include <array>
 
 class StaggeredGrid
@@ -86,7 +87,20 @@ public:
     /// @param j index of element in y-direction
     /// @return reference to value of G in element with indices i,j
     double& g(int i, int j);
+
+    int& setup(int i, int j);
  
+    int indexFluid();
+    int indexNoSlip();
+    int indexSlip();
+
+    /// @brief combined with pressure Neumann
+    /// @return 
+    int indexInflow();
+
+    /// @brief combined with pressure Dirichlet
+    /// @return 
+    int indexOutflow();
 
     /// @brief get mesh width in x-direction
     /// @return mesh width in x-direction
@@ -145,6 +159,15 @@ public:
     /// @return one after last inner index for p in y-direction
     int	pJEnd() const;
 
+    
+    int	setupIBegin() const;
+
+    int	setupIEnd() const;
+    
+    int	setupJBegin() const;
+    
+    int setupJEnd() const;
+
 protected:
     /// @brief two-dimensional array for number of elements in x and y direction (halo cells not included)
     const std::array<int,2> nCells_;
@@ -169,5 +192,7 @@ protected:
 
     /// @brief stores the values of the right hand side, lives in the centre of each cell
     FieldVariable rhs_;
+
+    Array2DInt setup_;
 
 };

@@ -8,7 +8,8 @@ StaggeredGrid::StaggeredGrid(std::array<int,2> nCells, std::array<double,2> mesh
     p_(FieldVariable({nCells[0]+2, nCells[1]+2}, {-0.5*meshWidth[0], -0.5*meshWidth[1]}, meshWidth)), // first (i,j=0) p node (halo node) lives half a x- and half a y-mesh width apart from the cartesian origin (x,y=0)
     f_(FieldVariable({nCells[0]+2, nCells[1]+2}, {0.0, -0.5*meshWidth[1]}, meshWidth)), // first (i,j=0) f node (halo node) lives half a y-mesh width below the cartesian origin (x,y=0) (analog to u)
     g_(FieldVariable({nCells[0]+2, nCells[1]+2}, {-0.5*meshWidth[0], 0.0}, meshWidth)), // first (i,j=0) g node (halo node) lives half a x-mesh width left to the cartesian origin (x,y=0) (analog to v)
-    rhs_(FieldVariable({nCells[0]+2, nCells[1]+2}, {-0.5*meshWidth[0], -0.5*meshWidth[1]}, meshWidth)) // first (i,j=0) rhs node (halo node) lives half a x- and half a y-mesh width apart from the cartesian origin (x,y=0) (analog to p)
+    rhs_(FieldVariable({nCells[0]+2, nCells[1]+2}, {-0.5*meshWidth[0], -0.5*meshWidth[1]}, meshWidth)), // first (i,j=0) rhs node (halo node) lives half a x- and half a y-mesh width apart from the cartesian origin (x,y=0) (analog to p)
+    setup_({nCells[0]+2, nCells[1]+2})
 {
 }
 
@@ -82,6 +83,36 @@ double& StaggeredGrid::g(int i, int j)
     return g_(i,j);
 }
 
+int& StaggeredGrid::setup(int i, int j)
+{
+    return setup_(i,j);
+}
+
+int StaggeredGrid::indexFluid()
+{
+    return 0;
+}
+
+int StaggeredGrid::indexNoSlip()
+{
+    return 1;
+}
+
+int StaggeredGrid::indexSlip()
+{
+    return 2;
+}
+
+int StaggeredGrid::indexInflow()
+{
+    return 3;
+}
+
+int StaggeredGrid::indexOutflow()
+{
+    return 4;
+}
+
 double StaggeredGrid::dx() const 
 {
     return meshWidth_[0];
@@ -150,4 +181,24 @@ int	StaggeredGrid::pJBegin() const
 int StaggeredGrid::pJEnd() const
 {
     return nCells_[1] + 1;
+}
+
+int	StaggeredGrid::setupIBegin() const 
+{
+    return 0;
+}
+ 
+int	StaggeredGrid::setupIEnd() const
+{
+    return nCells_[0] + 2;
+}
+ 
+int	StaggeredGrid::setupJBegin() const
+{
+    return 0;
+}
+ 
+int StaggeredGrid::setupJEnd() const
+{
+    return nCells_[1] + 2;
 }

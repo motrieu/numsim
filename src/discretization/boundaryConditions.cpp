@@ -1,0 +1,181 @@
+#include "boundaryConditions.h"
+
+void BoundaryConditions::noSlip(int i, int j, int directionIndex)
+{
+    if (directionIndex == 0)
+    {
+        v(i,j) = 0.0;
+        u(i,j) = -u(i,j+1);
+    }
+    else if (directionIndex == 1)
+    {
+        u(i,j) = 0.0;
+        v(i,j) = -v(i+1,j);
+    }
+    else if (directionIndex == 2)
+    {
+        v(i,j-1) = 0.0;
+        u(i,j) = -u(i,j-1);
+    }
+    else if (directionIndex == 3)
+    {
+        u(i-1,j) = 0.0;
+        v(i,j) = -v(i-1,j);
+    }
+}
+
+void BoundaryConditions::noSlipCorner(int i, int j, int directionIndex)
+{
+    if (directionIndex == 0)
+    {
+        u(i,j) = 0.0;
+        v(i,j) = 0.0;   
+    }
+    else if (directionIndex == 1)
+    {
+        u(i,j) = 0.0;
+        v(i,j-1) = 0.0;
+    }
+    else if (directionIndex == 2)
+    {
+        u(i-1,j) = 0.0;
+        v(i,j-1) = 0.0;
+    }
+    else if (directionIndex == 3)
+    {
+        u(i-1,j) = 0.0;
+        v(i,j) = 0.0;
+    }
+}
+
+void BoundaryConditions::slip(int i, int j, int directionIndex)
+{
+    if (directionIndex == 0)
+    {
+        v(i,j) = 0.0;
+        u(i,j) = u(i,j+1);
+    }
+    else if (directionIndex == 1)
+    {
+        u(i,j) = 0.0;
+        v(i,j) = v(i+1,j);
+    }
+    else if (directionIndex == 2)
+    {
+        v(i,j-1) = 0.0;
+        u(i,j) = u(i,j-1);
+    }
+    else if (directionIndex == 3)
+    {
+        u(i-1,j) = 0.0;
+        v(i,j) = v(i-1,j);
+    }
+}
+
+void BoundaryConditions::inflow(int i, int j, int directionIndex, double uIn, double vIn)
+{
+    if (directionIndex == 0)
+    {
+        v(i,j) = vIn;
+        u(i,j) = 2*uIn - u(i,j+1);
+    }
+    else if (directionIndex == 1)
+    {
+        u(i,j) = uIn;
+        v(i,j) = 2*vIn - v(i+1,j);
+    }
+    else if (directionIndex == 2)
+    {
+        v(i,j-1) = vIn;
+        u(i,j) = 2*uIn - u(i,j-1);
+    }
+    else if (directionIndex == 3)
+    {
+        u(i-1,j) = uIn;
+        v(i,j) = 2*vIn - v(i-1,j);
+    }
+}
+
+void BoundaryConditions::outflow(int i, int j, int directionIndex)
+{
+    if (directionIndex == 0)
+    {
+        u(i,j) = u(i,j+1);
+        v(i,j) = v(i,j+1);
+    }
+    else if (directionIndex == 1)
+    {
+        u(i,j) = u(i+1,j);
+        v(i,j) = v(i+1,j);
+    }
+    else if (directionIndex == 2)
+    {
+        u(i,j) = u(i,j-1);
+        v(i,j-1) = v(i,j-2);
+    }
+    else if (directionIndex == 3)
+    {
+        u(i-1,j) = u(i-2,j);
+        v(i,j) = v(i-1,j);
+    }
+}
+
+void BoundaryConditions::pressureDirichlet(int i, int j, int directionIndex, double pRB)
+{
+    if (directionIndex == 0)
+    {
+        p(i,j) = 2*pRB - p(i,j+1);
+    }
+    else if (directionIndex == 1)
+    {
+        p(i,j) = 2*pRB - p(i+1,j);
+    }
+    else if (directionIndex == 2)
+    {
+        p(i,j) = 2*pRB - p(i,j-1);
+    }
+    else if (directionIndex == 3)
+    {
+        p(i,j) = 2*pRB - p(i-1,j);
+    }
+}
+
+void BoundaryConditions::pressureNeumannZero(int i, int j, int directionIndex)
+{
+    if (directionIndex == 0)
+    {
+        p(i,j) = p(i,j+1);
+    }
+    else if (directionIndex == 1)
+    {
+        p(i,j) = p(i+1,j);
+    }
+    else if (directionIndex == 2)
+    {
+        p(i,j) = p(i,j-1);
+    }
+    else if (directionIndex == 3)
+    {
+        p(i,j) = p(i-1,j);
+    }
+}
+
+void BoundaryConditions::pressureNeumannZeroCorner(int i, int j, int directionIndex)
+{
+    if (directionIndex == 0)
+    {
+        p(i,j) = 0.5 * (p(i,j+1) + p(i+1,j));
+    }
+    else if (directionIndex == 1)
+    {
+        p(i,j) = 0.5 * (p(i+1,j) + p(i,j-1));
+    }
+    else if (directionIndex == 2)
+    {
+        p(i,j) = 0.5 * (p(i,j-1) + p(i-1,j));
+    }
+    else if (directionIndex == 3)
+    {
+        p(i,j) = 0.5 * (p(i-1,j) + p(i,j+1));
+    }
+}

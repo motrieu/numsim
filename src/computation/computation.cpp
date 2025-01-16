@@ -65,6 +65,9 @@ void Computation::initialize(int argc, char *argv[])
         pressureSolver_ = std::make_unique<GaussSeidel>(discretization_, settings_.epsilon, settings_.maximumNumberOfIterations);
     else
         throw std::invalid_argument("Only SOR and GaussSeidel are supported as pressure solvers.");
+
+    
+    bc_ = BoundaryConditions();
     
     outputWriterParaview_ = std::make_unique<OutputWriterParaview>(discretization_);
     // outputWriterText_ = std::make_unique<OutputWriterText>(discretization_);
@@ -76,63 +79,68 @@ void Computation::initialize(int argc, char *argv[])
     applyPreliminaryBCOnBoundary();
 }
 
-void Computation::applyBCOnBoundary()
+void Computation::applyBoundaryConditions()
 {
-    // sets boundary conditions for u(0,j) and u(N,j) based on given Dirichlet conditions
-    for (int j=(*discretization_).uJBegin()-1; j < (*discretization_).uJEnd()+1; j++)
+    for (int i = bc_.setupIBegin(); i < bc_.setupIEnd(); i++)
     {
-        (*discretization_).u((*discretization_).uIBegin()-1,j) = settings_.dirichletBcLeft[0];
-        (*discretization_).u((*discretization_).uIEnd(),j) = settings_.dirichletBcRight[0];
+        for (int j = bc_.setupJBegin(); j < bc_.setupJEnd(); j++)
+        {
+            if (bc_.setup(i,j) != bc_.indexFluid())
+            {
+                std::vector<int> edgeDirections;
+                if ((j+1 < bc_.setupJEnd()) && (bc_.setup(i,j+1) == bc_.indexFluid()))
+                    edgeDirections.push_back(0);
+                if ((i+1 < bc_.setupIEnd()) && (bc_.setup(i+1,j) == bc_.indexFluid()))
+                    edgeDirections.push_back(1);
+                if ((j-1 >= bc_.setupJBegin()) && (bc_.setup(i,j-1) == bc_.indexFluid()))
+                    edgeDirections.push_back(2);
+                if ((i-1 >= bc_.setupIBegin()) && (bc_.setup(i-1,j) == bc_.indexFluid()))
+                    edgeDirections.push_back(3);
+                
+                if (edgeDirections.size() > 2)
+                    throw std::invalid_state("Only corners or edges allowed for obstacles, more than 2 edges given.");
+                
+                if (edgeDirections.size() == 2)
+                {
+                    if (edgeDirections[1] != (edgeDirections[0]+1)%4)
+                        throw std::invalid_state("Only corners or edges allowed for obstacles, 2 opposite edges given.");
+
+                    if (bc_.setup(i,j) == bc_.indexNoSlip())
+                    {
+                        bc_.noSlipCorner(i, j, edgeDirections[0]);
+                        bc_.pressureNeumannZeroCorner(i, j, edgeDirections[0]);
+                    }
+                    else
+                        throw std::invalid_state("Only NOSLIP allowed for corners of obstacles.");
+                }
+
+                else if (edgeDirections.size() == 1)
+                {
+                    if (bc_.setup(i,j) == bc_.indexNoSlip())
+                    {
+                        bc_.noSlip(i, j, edgeDirections[0]);
+                        bc_.pressureNeumannZero(i, j, edgeDirections[0]);
+                    }
+                    else if (bc_.setup(i,j) == bc_.indexSlip())
+                    {
+                        bc_.slip(i, j, edgeDirections[0]);
+                        bc_.pressureNeumannZero(i, j, edgeDirections[0]);
+                    }
+                    else if (bc_.setup(i,j) == bc_.indexInflow())
+                    {
+                        bc_.inflow(i, j, edgeDirections[0]);
+                        bc_.pressureNeumannZero(i, j, edgeDirections[0]);
+                    }
+                    else if (bc_.setup(i,j) == bc_.indexOutflow())
+                    {
+                        bc_.outflow(i, j, edgeDirections[0]);
+                        bc_.pressureDirichlet(i, j, edgeDirections[0]);
+                    }
+                }
+            }
+        }
     }
 
-    // sets boundary conditions for v(i,0) and v(i,N) based on given Dirichlet conditions
-    for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
-    {
-        (*discretization_).v(i,(*discretization_).vJBegin()-1) = settings_.dirichletBcBottom[1];
-        (*discretization_).v(i,(*discretization_).vJEnd()) = settings_.dirichletBcTop[1];
-    }
-}
-
-void Computation::applyBCInHaloCells()
-{
-    // sets boundary conditions for u(i,0) and u(i,N+1) based on given Dirichlet conditions and the inner cell values u(i,1), u(i,N)
-    for (int i=(*discretization_).uIBegin(); i < (*discretization_).uIEnd(); i++)
-    {
-        const double uLower = (*discretization_).u(i,(*discretization_).uJBegin());
-        const double uUpper = (*discretization_).u(i,(*discretization_).uJEnd()-1);
-        (*discretization_).u(i,(*discretization_).uJBegin()-1) = 2.0*settings_.dirichletBcBottom[0] - uLower;
-        (*discretization_).u(i,(*discretization_).uJEnd()) = 2.0*settings_.dirichletBcTop[0] - uUpper;
-    }
-
-    // sets boundary conditions for v(0,j) and v(N+1,j) based on given Dirichlet conditions and the inner cell values v(1,j), v(N,j)
-    for (int j=(*discretization_).vJBegin()-1; j < (*discretization_).vJEnd()+1; j++)
-    {
-        const double vLeft = (*discretization_).v((*discretization_).vIBegin(),j);
-        const double vRight = (*discretization_).v((*discretization_).vIEnd()-1,j);
-        (*discretization_).v((*discretization_).vIBegin()-1,j) = 2.0*settings_.dirichletBcLeft[1] - vLeft;
-        (*discretization_).v((*discretization_).vIEnd(),j) = 2.0*settings_.dirichletBcRight[1] - vRight;
-    }
-}
-
-void Computation::applyPreliminaryBCOnBoundary()
-{
-    // sets boundary values of F equal to boundary values of u(0,j), u(N,j)
-    for (int j=(*discretization_).uJBegin(); j < (*discretization_).uJEnd(); j++)
-    {
-        const double uLeft = (*discretization_).u((*discretization_).uIBegin()-1,j);
-        const double uRight = (*discretization_).u((*discretization_).uIEnd(),j);
-        (*discretization_).f((*discretization_).uIBegin()-1,j) = uLeft;
-        (*discretization_).f((*discretization_).uIEnd(),j) = uRight;
-    }
-
-    // sets boundary values of G equal to boundary values of v(i,0), v(i,N)
-    for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
-    {
-        const double vLower = (*discretization_).v(i,(*discretization_).vJBegin()-1);
-        const double vUpper = (*discretization_).v(i,(*discretization_).vJEnd());
-        (*discretization_).g(i,(*discretization_).vJBegin()-1) = vLower;
-        (*discretization_).g(i,(*discretization_).vJEnd()) = vUpper;
-    }
 }
 
 void Computation::computeTimeStepWidth()

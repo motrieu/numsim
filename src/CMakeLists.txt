@@ -10,6 +10,7 @@ add_executable(${PROJECT_NAME}
    computation/computation.cpp
    discretization/centralDifferences.cpp
    discretization/discretization.cpp
+   discretization/boundaryConditions.cpp
    discretization/donorCell.cpp
    discretization/staggeredGrid.cpp
    output_writer/output_writer.cpp
@@ -20,6 +21,7 @@ add_executable(${PROJECT_NAME}
    pressure_solver/sor.cpp
    settings/settings.cpp
    storage/array2d.cpp
+   storage/array2dInt.cpp
    storage/fieldVariable.cpp
 )
 
