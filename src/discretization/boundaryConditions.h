@@ -8,6 +8,11 @@ class BoundaryConditions : public StaggeredGrid
 {
 public:
 
+    /// @brief constructor of boundary conditions
+    /// @param nCells two-dimensional array for number of elements in x and y direction (halo cells not included)
+    /// @param meshWidth two-dimensional array for mesh width in x and y direction
+    BoundaryConditions(std::array<int,2> nCells, std::array<double,2> meshWidth);
+
     /// @brief 
     /// @param i 
     /// @param j 

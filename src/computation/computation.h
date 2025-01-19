@@ -35,6 +35,10 @@ public:
 
 private:
     
+    void loadSetupFromFile(std::string filename);
+
+    void initializeEdgeDirections();
+    
     void applyBoundaryConditions();
 
     /// @brief computes time step width for each time step such that the stability (diffusive and convective) is ensured
@@ -61,8 +65,6 @@ private:
  
     /// @brief shared pointer to the discretization, can either point towards the Central Difference or Donor Cell scheme
     std::shared_ptr<Discretization> discretization_;
-
-    BoundaryConditions bc_;
     
     /// @brief shared pointer to the pressure solver, can either point towards the Gauss-Seidel or SOR algorithm
     std::unique_ptr<PressureSolver> pressureSolver_;

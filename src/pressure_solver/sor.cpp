@@ -13,7 +13,7 @@ void SOR::solve()
     int n = 0;
     double resNormSquared;
     const double epsSquared = epsilon_*epsilon_;
-    const double numberOfValues = ((*discretization_).nCells()[0]) * ((*discretization_).nCells()[1]);
+    double numberOfValues = 0.0;
 
     do
     {
@@ -21,20 +21,25 @@ void SOR::solve()
         {
             for (int j=(*discretization_).pJBegin(); j < (*discretization_).pJEnd(); j++)
             {
-                const double prefactor = (dx*dx*dy*dy) / (2.0*(dx*dx+dy*dy));
-                const double firstSummand = ((*discretization_).p(i-1,j) + (*discretization_).p(i+1,j)) / (dx*dx);
-                const double secondSummand = ((*discretization_).p(i,j-1) + (*discretization_).p(i,j+1)) / (dy*dy);
-                const double rhs = (*discretization_).rhs(i,j);
-                const double p = (*discretization_).p(i,j);
+                if ((*discretization_).setup(i,j) == (*discretization_).indexFluid())
+                {
+                    numberOfValues += 1.0;
+                    
+                    const double prefactor = (dx*dx*dy*dy) / (2.0*(dx*dx+dy*dy));
+                    const double firstSummand = ((*discretization_).p(i-1,j) + (*discretization_).p(i+1,j)) / (dx*dx);
+                    const double secondSummand = ((*discretization_).p(i,j-1) + (*discretization_).p(i,j+1)) / (dy*dy);
+                    const double rhs = (*discretization_).rhs(i,j);
+                    const double p = (*discretization_).p(i,j);
 
-                (*discretization_).p(i,j) = p + omega_ * (prefactor * (firstSummand + secondSummand - rhs) - p);
+                    (*discretization_).p(i,j) = p + omega_ * (prefactor * (firstSummand + secondSummand - rhs) - p);
+                }
             }
         }
 
         resNormSquared = calcResNormSquared();
         n++;
 
-        setBoundaryValues();
+        applyBoundaryConditions();
     }
     //Termination criteria: either number of maximal iterations is reached or residual squared norm is less or equal to given threshold
     while ((n < maximumNumberOfIterations_) && (resNormSquared > numberOfValues*epsSquared));

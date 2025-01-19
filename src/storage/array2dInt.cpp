@@ -5,8 +5,8 @@
 Array2DInt::Array2DInt(std::array<int,2> size) :
   size_(size)
 {
-  // allocate data, initialize to 0
-  data_.resize(size_[0]*size_[1], 0);
+  // allocate data, initialize to -1
+  data_.resize(size_[0]*size_[1], -1);
 }
 
 //! get the size

@@ -9,7 +9,11 @@ StaggeredGrid::StaggeredGrid(std::array<int,2> nCells, std::array<double,2> mesh
     f_(FieldVariable({nCells[0]+2, nCells[1]+2}, {0.0, -0.5*meshWidth[1]}, meshWidth)), // first (i,j=0) f node (halo node) lives half a y-mesh width below the cartesian origin (x,y=0) (analog to u)
     g_(FieldVariable({nCells[0]+2, nCells[1]+2}, {-0.5*meshWidth[0], 0.0}, meshWidth)), // first (i,j=0) g node (halo node) lives half a x-mesh width left to the cartesian origin (x,y=0) (analog to v)
     rhs_(FieldVariable({nCells[0]+2, nCells[1]+2}, {-0.5*meshWidth[0], -0.5*meshWidth[1]}, meshWidth)), // first (i,j=0) rhs node (halo node) lives half a x- and half a y-mesh width apart from the cartesian origin (x,y=0) (analog to p)
-    setup_({nCells[0]+2, nCells[1]+2})
+    setup_({nCells[0]+2, nCells[1]+2}),
+    edgeDirections_({nCells[0]+2, nCells[1]+2}),
+    uIn_({nCells[0]+2, nCells[1]+2}),
+    vIn_({nCells[0]+2, nCells[1]+2}),
+    pRB_({nCells[0]+2, nCells[1]+2})
 {
 }
 
@@ -83,9 +87,55 @@ double& StaggeredGrid::g(int i, int j)
     return g_(i,j);
 }
 
+
+int StaggeredGrid::setup(int i, int j) const
+{
+    return setup_(i,j);
+}
+
 int& StaggeredGrid::setup(int i, int j)
 {
     return setup_(i,j);
+}
+
+int StaggeredGrid::edgeDirections(int i, int j) const
+{
+    return edgeDirections_(i,j);
+}
+
+int& StaggeredGrid::edgeDirections(int i, int j)
+{
+    return edgeDirections_(i,j);
+}
+
+double StaggeredGrid::uIn(int i, int j) const
+{
+    return uIn_(i,j);
+}
+
+double& StaggeredGrid::uIn(int i, int j)
+{
+    return uIn_(i,j);
+}
+
+double StaggeredGrid::vIn(int i, int j) const
+{
+    return vIn_(i,j);
+}
+
+double& StaggeredGrid::vIn(int i, int j)
+{
+    return vIn_(i,j);
+}
+
+double StaggeredGrid::pRB(int i, int j) const
+{
+    return pRB_(i,j);
+}
+
+double& StaggeredGrid::pRB(int i, int j)
+{
+    return pRB_(i,j);
 }
 
 int StaggeredGrid::indexFluid()

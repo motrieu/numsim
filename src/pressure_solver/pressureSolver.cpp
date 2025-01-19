@@ -6,24 +6,33 @@ PressureSolver::PressureSolver(std::shared_ptr<Discretization> discretization, d
 {
 }
 
-void PressureSolver::setBoundaryValues() 
+void PressureSolver::applyBoundaryConditions()
 {
-    //sets boundary conditions for p: p(i,0) = p(i,1), p(i,N+1) = p(i,N)
-    for (int i=(*discretization_).pIBegin()-1; i < (*discretization_).pIEnd()+1; i++)
-    { 
-        const double pInnerLower = (*discretization_).p(i,(*discretization_).pJBegin());
-        const double pInnerUpper = (*discretization_).p(i,(*discretization_).pJEnd()-1);
-        (*discretization_).p(i,(*discretization_).pJBegin()-1) = pInnerLower;
-        (*discretization_).p(i,(*discretization_).pJEnd()) = pInnerUpper;
-    }
-    
-    //sets boundary conditions for p: p(0,j) = p(1,j), p(N+1,j) = p(N,j)
-    for (int j=(*discretization_).pJBegin()-1; j < (*discretization_).pJEnd()+1; j++)
+    for (int i = (*discretization_).setupIBegin(); i < (*discretization_).setupIEnd(); i++)
     {
-        const double pInnerLeft = (*discretization_).p((*discretization_).pIBegin(),j);
-        const double pInnerRight = (*discretization_).p((*discretization_).pIEnd()-1,j);
-        (*discretization_).p((*discretization_).pIBegin()-1,j) = pInnerLeft;
-        (*discretization_).p((*discretization_).pIEnd(),j) = pInnerRight;
+        for (int j = (*discretization_).setupJBegin(); j < (*discretization_).setupJEnd(); j++)
+        {
+            if (((*discretization_).setup(i,j) != (*discretization_).indexFluid())
+                    && (*discretization_).edgeDirections(i,j) != -1)
+            {
+                int edgeDirection = (*discretization_).edgeDirections(i,j);
+                if (edgeDirection%2 == 1)
+                {
+                    (*discretization_).pressureNeumannZeroCorner(i, j, edgeDirection);
+                }
+                else
+                {
+                    if ((*discretization_).setup(i,j) == (*discretization_).indexNoSlip())
+                        (*discretization_).pressureNeumannZero(i, j, edgeDirection);
+                    else if ((*discretization_).setup(i,j) == (*discretization_).indexSlip())
+                        (*discretization_).pressureNeumannZero(i, j, edgeDirection);
+                    else if ((*discretization_).setup(i,j) == (*discretization_).indexInflow())
+                        (*discretization_).pressureNeumannZero(i, j, edgeDirection);
+                    else if ((*discretization_).setup(i,j) == (*discretization_).indexOutflow())
+                        (*discretization_).pressureDirichlet(i, j, edgeDirection, (*discretization_).pRB(i,j));
+                }
+            }
+        }
     }
 }
 
@@ -37,12 +46,15 @@ const double PressureSolver::calcResNormSquared() const
     {
         for (int j=(*discretization_).pJBegin(); j < (*discretization_).pJEnd(); j++)
         {
-            const double rhs = (*discretization_).rhs(i,j);
-            const double Pxx = ((*discretization_).p(i+1,j) - 2.0*(*discretization_).p(i,j) + (*discretization_).p(i-1,j)) / (dx*dx);
-            const double Pyy = ((*discretization_).p(i,j+1) - 2.0*(*discretization_).p(i,j) + (*discretization_).p(i,j-1)) / (dy*dy);
-            const double res = rhs - (Pxx + Pyy);
+            if ((*discretization_).setup(i,j) == (*discretization_).indexFluid())
+            {
+                const double rhs = (*discretization_).rhs(i,j);
+                const double Pxx = ((*discretization_).p(i+1,j) - 2.0*(*discretization_).p(i,j) + (*discretization_).p(i-1,j)) / (dx*dx);
+                const double Pyy = ((*discretization_).p(i,j+1) - 2.0*(*discretization_).p(i,j) + (*discretization_).p(i,j-1)) / (dy*dy);
+                const double res = rhs - (Pxx + Pyy);
 
-            resNormSquared += res*res;
+                resNormSquared += res*res;
+            }
         }
     }
 

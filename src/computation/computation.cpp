@@ -5,6 +5,8 @@
 #include <memory>
 #include <cmath>
 
+#include <iostream>
+
 
 void Computation::runSimulation()
 {
@@ -13,7 +15,7 @@ void Computation::runSimulation()
     while (time < settings_.endTime)
     {
         // boundary conditions of u and v in halo cells need to be set in each time step
-        applyBCInHaloCells();
+        applyBoundaryConditions();
 
         // time step width needs to be calculated each time step to ensure stability
         computeTimeStepWidth();
@@ -45,7 +47,7 @@ void Computation::initialize(int argc, char *argv[])
     std::string filename = argv[1];
 
     // load settings from file
-    settings_.loadFromFile(filename);
+    settings_.loadParamsFromFile(filename);
 
     // calculates mesh width in x- and y-direction based on given parameters
     const double meshWidthX = settings_.physicalSize[0] / settings_.nCells[0];
@@ -66,81 +68,215 @@ void Computation::initialize(int argc, char *argv[])
     else
         throw std::invalid_argument("Only SOR and GaussSeidel are supported as pressure solvers.");
 
-    
-    bc_ = BoundaryConditions();
-    
     outputWriterParaview_ = std::make_unique<OutputWriterParaview>(discretization_);
+
+    loadSetupFromFile(filename);
+
+    initializeEdgeDirections();
+
     // outputWriterText_ = std::make_unique<OutputWriterText>(discretization_);
 
     // boundary conditions for u and v on the boundary faces only need to be set once in the beginning of the computation
-    applyBCOnBoundary();
+    //applyBCOnBoundary();
 
     // boundary conditions for F and G on the boundary faces only need to be set once in the beginning of the computation
-    applyPreliminaryBCOnBoundary();
+    //applyPreliminaryBCOnBoundary();
 }
 
-void Computation::applyBoundaryConditions()
+void Computation::loadSetupFromFile(std::string filename)
 {
-    for (int i = bc_.setupIBegin(); i < bc_.setupIEnd(); i++)
+    // open file
+    std::ifstream file(filename.c_str(), std::ios::in);
+
+    // check if file is open
+    if (!file.is_open())
     {
-        for (int j = bc_.setupJBegin(); j < bc_.setupJEnd(); j++)
+        std::cout << "Could not open parameter file \"" << filename << "\"." << std::endl;
+        return;
+    }
+
+    bool readSetup = false;
+    bool readUIn = false;
+    bool readVIn = false;
+    bool readPRB = false;
+
+    int j = 0;
+
+    // loop over lines of file
+    for (int lineNo = 0;; lineNo++)
+    {
+        // read line
+        std::string line;
+        getline(file, line);
+
+        // at the end of the file break for loop
+        if (file.eof())
+            break;
+
+        settings_.removeWhitespaceAtBeginning(line);
+
+        if (line.find("#SETUP") != std::string::npos)
         {
-            if (bc_.setup(i,j) != bc_.indexFluid())
+            j = 0;
+            readSetup = true;
+        }
+        else if (line.find("#UIN") != std::string::npos)
+        {
+            j = 0;
+            readUIn = true;
+        }
+        else if (line.find("#VIN") != std::string::npos)
+        {
+            j = 0;
+            readVIn = true;
+        }
+        else if (line.find("#PRB") != std::string::npos)
+        {
+            j = 0;
+            readPRB = true;
+        }
+        
+        if (readPRB && std::isdigit(line[0]))
+        {
+            int valueStartIndex = 0;
+            int valueEndIndex = 0;
+            std::string valueString;
+            int i = 0;
+            while (valueStartIndex < line.length())
+            {
+                valueEndIndex = line.find_first_of(" \n", valueStartIndex);
+                valueString = line.substr(valueStartIndex, valueEndIndex-valueStartIndex);
+                double value = std::stod(valueString);
+                valueStartIndex = valueEndIndex+1;
+                (*discretization_).pRB(i,(*discretization_).setupJEnd()-1-j) = value;
+                i++;
+            }
+            j++;
+        }
+        else if (readVIn && std::isdigit(line[0]))
+        {
+            int valueStartIndex = 0;
+            int valueEndIndex = 0;
+            std::string valueString;
+            int i = 0;
+            while (valueStartIndex < line.length())
+            {
+                valueEndIndex = line.find_first_of(" \n", valueStartIndex);
+                valueString = line.substr(valueStartIndex, valueEndIndex-valueStartIndex);
+                double value = std::stod(valueString);
+                valueStartIndex = valueEndIndex+1;
+                (*discretization_).vIn(i,(*discretization_).setupJEnd()-1-j) = value;
+                i++;
+            }
+            j++;
+        }
+        else if (readUIn && std::isdigit(line[0]))
+        {
+            int valueStartIndex = 0;
+            int valueEndIndex = 0;
+            std::string valueString;
+            int i = 0;
+            while (valueStartIndex < line.length())
+            {
+                valueEndIndex = line.find_first_of(" \n", valueStartIndex);
+                valueString = line.substr(valueStartIndex, valueEndIndex-valueStartIndex);
+                double value = std::stod(valueString);
+                valueStartIndex = valueEndIndex+1;
+                (*discretization_).uIn(i,(*discretization_).setupJEnd()-1-j) = value;
+                i++;
+            }
+            j++;
+        }
+        else if (readSetup && std::isdigit(line[0]))
+        {
+            int valueStartIndex = 0;
+            int valueEndIndex = 0;
+            std::string valueString;
+            int i = 0;
+            while (valueStartIndex < line.length())
+            {
+                valueEndIndex = line.find_first_of(" \n", valueStartIndex);
+                valueString = line.substr(valueStartIndex, valueEndIndex-valueStartIndex);
+                int value = std::stod(valueString);
+                valueStartIndex = valueEndIndex+1;
+                (*discretization_).setup(i,(*discretization_).setupJEnd()-1-j) = value;
+                i++;
+            }
+            j++;
+        }
+    }
+}
+
+void Computation::initializeEdgeDirections()
+{
+    for (int i = (*discretization_).setupIBegin(); i < (*discretization_).setupIEnd(); i++)
+    {
+        for (int j = (*discretization_).setupJBegin(); j < (*discretization_).setupJEnd(); j++)
+        {
+            if ((*discretization_).setup(i,j) != (*discretization_).indexFluid())
             {
                 std::vector<int> edgeDirections;
-                if ((j+1 < bc_.setupJEnd()) && (bc_.setup(i,j+1) == bc_.indexFluid()))
+                if ((j+1 < (*discretization_).setupJEnd()) && ((*discretization_).setup(i,j+1) == (*discretization_).indexFluid()))
                     edgeDirections.push_back(0);
-                if ((i+1 < bc_.setupIEnd()) && (bc_.setup(i+1,j) == bc_.indexFluid()))
+                if ((i+1 < (*discretization_).setupIEnd()) && ((*discretization_).setup(i+1,j) == (*discretization_).indexFluid()))
                     edgeDirections.push_back(1);
-                if ((j-1 >= bc_.setupJBegin()) && (bc_.setup(i,j-1) == bc_.indexFluid()))
+                if ((j-1 >= (*discretization_).setupJBegin()) && ((*discretization_).setup(i,j-1) == (*discretization_).indexFluid()))
                     edgeDirections.push_back(2);
-                if ((i-1 >= bc_.setupIBegin()) && (bc_.setup(i-1,j) == bc_.indexFluid()))
+                if ((i-1 >= (*discretization_).setupIBegin()) && ((*discretization_).setup(i-1,j) == (*discretization_).indexFluid()))
                     edgeDirections.push_back(3);
                 
                 if (edgeDirections.size() > 2)
-                    throw std::invalid_state("Only corners or edges allowed for obstacles, more than 2 edges given.");
+                    throw std::invalid_argument("Only corners or edges allowed for obstacles, more than 2 edges given.");
                 
                 if (edgeDirections.size() == 2)
                 {
                     if (edgeDirections[1] != (edgeDirections[0]+1)%4)
-                        throw std::invalid_state("Only corners or edges allowed for obstacles, 2 opposite edges given.");
+                        throw std::invalid_argument("Only corners or edges allowed for obstacles, 2 opposite edges given.");
 
-                    if (bc_.setup(i,j) == bc_.indexNoSlip())
-                    {
-                        bc_.noSlipCorner(i, j, edgeDirections[0]);
-                        bc_.pressureNeumannZeroCorner(i, j, edgeDirections[0]);
-                    }
+                    if ((*discretization_).setup(i,j) == (*discretization_).indexNoSlip())
+                        (*discretization_).edgeDirections(i,j) = edgeDirections[0]*2 + 1;
                     else
-                        throw std::invalid_state("Only NOSLIP allowed for corners of obstacles.");
+                        throw std::invalid_argument("Only NOSLIP allowed for corners of obstacles.");
                 }
-
                 else if (edgeDirections.size() == 1)
                 {
-                    if (bc_.setup(i,j) == bc_.indexNoSlip())
-                    {
-                        bc_.noSlip(i, j, edgeDirections[0]);
-                        bc_.pressureNeumannZero(i, j, edgeDirections[0]);
-                    }
-                    else if (bc_.setup(i,j) == bc_.indexSlip())
-                    {
-                        bc_.slip(i, j, edgeDirections[0]);
-                        bc_.pressureNeumannZero(i, j, edgeDirections[0]);
-                    }
-                    else if (bc_.setup(i,j) == bc_.indexInflow())
-                    {
-                        bc_.inflow(i, j, edgeDirections[0]);
-                        bc_.pressureNeumannZero(i, j, edgeDirections[0]);
-                    }
-                    else if (bc_.setup(i,j) == bc_.indexOutflow())
-                    {
-                        bc_.outflow(i, j, edgeDirections[0]);
-                        bc_.pressureDirichlet(i, j, edgeDirections[0]);
-                    }
+                    (*discretization_).edgeDirections(i,j) = edgeDirections[0]*2;
+                }
+            }
+        }
+    }
+}
+
+void Computation::applyBoundaryConditions()
+{
+    for (int i = (*discretization_).setupIBegin(); i < (*discretization_).setupIEnd(); i++)
+    {
+        for (int j = (*discretization_).setupJBegin(); j < (*discretization_).setupJEnd(); j++)
+        {
+            if (((*discretization_).setup(i,j) != (*discretization_).indexFluid())
+                    && (*discretization_).edgeDirections(i,j) != -1)
+            {
+                int edgeDirection = (*discretization_).edgeDirections(i,j);
+                if (edgeDirection%2 == 1)
+                {
+                    (*discretization_).noSlipCorner(i, j, edgeDirection);
+                }
+                else
+                {
+                    if ((*discretization_).setup(i,j) == (*discretization_).indexNoSlip())
+                        (*discretization_).noSlip(i, j, edgeDirection);
+                    else if ((*discretization_).setup(i,j) == (*discretization_).indexSlip())
+                        (*discretization_).slip(i, j, edgeDirection);
+                    else if ((*discretization_).setup(i,j) == (*discretization_).indexInflow())
+                        (*discretization_).inflow(i, j, edgeDirection, (*discretization_).uIn(i,j), (*discretization_).vIn(i,j));
+                    else if ((*discretization_).setup(i,j) == (*discretization_).indexOutflow())
+                        (*discretization_).outflow(i, j, edgeDirection);
                 }
             }
         }
     }
 
+    (*pressureSolver_).applyBoundaryConditions();
 }
 
 void Computation::computeTimeStepWidth()
@@ -170,6 +306,8 @@ void Computation::computeTimeStepWidth()
         }
     }
 
+    std::cout << uAbsMax << std::endl;
+
     const double dtConvectiveU = dx / uAbsMax;
     const double dtConvectiveV = dy / vAbsMax;
 
@@ -180,28 +318,36 @@ void Computation::computeTimeStepWidth()
 
 void Computation::computePreliminaryVelocities()
 {
-    for (int i=(*discretization_).uIBegin(); i < (*discretization_).uIEnd(); i++)
+    for (int j=(*discretization_).uJBegin(); j < (*discretization_).uJEnd(); j++)
     {
-        for (int j=(*discretization_).uJBegin(); j < (*discretization_).uJEnd(); j++)
+        for (int i=(*discretization_).uIBegin(); i < (*discretization_).uIEnd(); i++)
         {
-            (*discretization_).f(i,j) = (*discretization_).u(i,j) + dt_ * (
+            if (((*discretization_).setup(i,j) == (*discretization_).indexFluid())
+                    && ((*discretization_).setup(i+1,j) == (*discretization_).indexFluid()))
+            {
+                (*discretization_).f(i,j) = (*discretization_).u(i,j) + dt_ * (
                                             (1.0/settings_.re) * ((*discretization_).computeD2uDx2(i,j) + (*discretization_).computeD2uDy2(i,j))
                                             - (*discretization_).computeDu2Dx(i,j)
                                             - (*discretization_).computeDuvDy(i,j)
                                             + settings_.g[0]
                                             );
+            }
         }
     }
     for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
     {
         for (int j=(*discretization_).vJBegin(); j < (*discretization_).vJEnd(); j++)
         {
-            (*discretization_).g(i,j) = (*discretization_).v(i,j) + dt_ * (
+            if (((*discretization_).setup(i,j) == (*discretization_).indexFluid())
+                    && ((*discretization_).setup(i,j+1) == (*discretization_).indexFluid()))
+            {
+                (*discretization_).g(i,j) = (*discretization_).v(i,j) + dt_ * (
                                             (1.0/settings_.re) * ((*discretization_).computeD2vDx2(i,j) + (*discretization_).computeD2vDy2(i,j))
                                             - (*discretization_).computeDuvDx(i,j)
                                             - (*discretization_).computeDv2Dy(i,j)
                                             + settings_.g[1]
                                             );
+            }
         }
     }
 }
@@ -212,9 +358,12 @@ void Computation::computeRightHandSide()
     {
         for (int j=(*discretization_).pJBegin(); j < (*discretization_).pJEnd(); j++)
         {
-            const double fDiffQuotient = ((*discretization_).f(i,j) - (*discretization_).f(i-1,j)) / meshWidth_[0];
-            const double gDiffQuotient = ((*discretization_).g(i,j) - (*discretization_).g(i,j-1)) / meshWidth_[1];
-            (*discretization_).rhs(i,j) = (1.0/dt_) * (fDiffQuotient + gDiffQuotient);
+            if ((*discretization_).setup(i,j) == (*discretization_).indexFluid())
+            {
+                const double fDiffQuotient = ((*discretization_).f(i,j) - (*discretization_).f(i-1,j)) / meshWidth_[0];
+                const double gDiffQuotient = ((*discretization_).g(i,j) - (*discretization_).g(i,j-1)) / meshWidth_[1];
+                (*discretization_).rhs(i,j) = (1.0/dt_) * (fDiffQuotient + gDiffQuotient);
+            }
         }
     }
 }
@@ -226,20 +375,28 @@ void Computation::computePressure()
 
 void Computation::computeVelocities()
 {
-    for (int i=(*discretization_).uIBegin(); i < (*discretization_).uIEnd(); i++)
+    for (int j=(*discretization_).uJBegin(); j < (*discretization_).uJEnd(); j++)
     {
-        for (int j=(*discretization_).uJBegin(); j < (*discretization_).uJEnd(); j++)
+        for (int i=(*discretization_).uIBegin(); i < (*discretization_).uIEnd(); i++)
         {
-            (*discretization_).u(i,j) = (*discretization_).f(i,j) - (dt_/meshWidth_[0])
+            if (((*discretization_).setup(i,j) == (*discretization_).indexFluid())
+                    && ((*discretization_).setup(i+1,j) == (*discretization_).indexFluid()))
+            {
+                (*discretization_).u(i,j) = (*discretization_).f(i,j) - (dt_/meshWidth_[0])
                                             * ((*discretization_).p(i+1,j) - (*discretization_).p(i,j));
+            }
         }
     }
     for (int i=(*discretization_).vIBegin(); i < (*discretization_).vIEnd(); i++)
     {
         for (int j=(*discretization_).vJBegin(); j < (*discretization_).vJEnd(); j++)
         {
-            (*discretization_).v(i,j) = (*discretization_).g(i,j) - (dt_/meshWidth_[1])
+            if (((*discretization_).setup(i,j) == (*discretization_).indexFluid())
+                    && ((*discretization_).setup(i,j+1) == (*discretization_).indexFluid()))
+            {
+                (*discretization_).v(i,j) = (*discretization_).g(i,j) - (dt_/meshWidth_[1])
                                             * ((*discretization_).p(i,j+1) - (*discretization_).p(i,j));
+            }
         }
     }
 }

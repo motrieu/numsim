@@ -19,11 +19,6 @@ struct Settings
     bool useDonorCell = false; //< if the donor cell scheme schould be used
     double alpha = 0.5;        //< factor for donor-cell scheme
 
-    std::array<double, 2> dirichletBcBottom; //< prescribed values of u,v at bottom of domain
-    std::array<double, 2> dirichletBcTop;    //< prescribed values of u,v at top of domain
-    std::array<double, 2> dirichletBcLeft;   //< prescribed values of u,v at left of domain
-    std::array<double, 2> dirichletBcRight;  //< prescribed values of u,v at right of domain
-
     std::string pressureSolver = "SOR";  //< which pressure solver to use, "GaussSeidel" or "SOR"
     double omega = 1.0;                  //< overrelaxation factor
     double epsilon = 1e-5;               //< tolerance for the residual in the pressure solver
@@ -32,16 +27,16 @@ struct Settings
 public:
     /// @brief Load and set parameters in struct from specified text file ! parse a text file with settings, each line contains "<parameterName> = <value>"
     /// @param filename Unix-type path to parameters file
-    void loadFromFile(std::string filename);
+    void loadParamsFromFile(std::string filename);
 
     //! output all settings to console
     void printSettings();
 
-private:
-    
     /// @brief removes white space in the beginning of the line
     /// @param line line in file stream to be updated, will be mutated
     void removeWhitespaceAtBeginning(std::string &line);
+
+private:
 
     /// @brief extracts the substring specifying the parameter name in the given file line
     /// @param line line in file stream to be operated on

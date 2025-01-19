@@ -1,7 +1,8 @@
 #pragma once
 
 #include "storage/fieldVariable.h"
-#include "storage/array2DInt.h"
+#include "storage/array2d.h"
+#include "storage/array2dInt.h"
 #include <array>
 
 class StaggeredGrid
@@ -88,7 +89,16 @@ public:
     /// @return reference to value of G in element with indices i,j
     double& g(int i, int j);
 
+    int setup(int i, int j) const;
     int& setup(int i, int j);
+    int edgeDirections(int i, int j) const;
+    int& edgeDirections(int i, int j);
+    double uIn(int i, int j) const;
+    double& uIn(int i, int j);
+    double vIn(int i, int j) const;
+    double& vIn(int i, int j);
+    double pRB(int i, int j) const;
+    double& pRB(int i, int j);
  
     int indexFluid();
     int indexNoSlip();
@@ -194,5 +204,9 @@ protected:
     FieldVariable rhs_;
 
     Array2DInt setup_;
+    Array2DInt edgeDirections_;
+    Array2D uIn_;
+    Array2D vIn_;
+    Array2D pRB_;
 
 };

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "staggeredGrid.h"
+#include "boundaryConditions.h"
 #include <array>
 
 
-class Discretization : public StaggeredGrid
+class Discretization : public BoundaryConditions
 {
 public:
     

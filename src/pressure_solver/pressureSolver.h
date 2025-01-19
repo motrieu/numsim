@@ -17,10 +17,10 @@ public:
     /// @brief solves for new pressure values, the new values are stored in the field variable p, implementation depends on which solver is used (GS or SOR)
     virtual void solve() = 0;
 
-protected:
-
     /// @brief sets boundary values for field variable p, the pressure value of the closest inner cell is used to set the boundary 
-    void setBoundaryValues();
+    void applyBoundaryConditions();
+
+protected:
 
     /// @brief calculates squared residual norm of pressure p, is used as termination criterium
     /// @return squared residual norm of pressure p
