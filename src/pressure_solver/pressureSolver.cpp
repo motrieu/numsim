@@ -16,7 +16,8 @@ void PressureSolver::applyBoundaryConditions()
                     && (*discretization_).edgeDirections(i,j) != -1)
             {
                 int edgeDirection = (*discretization_).edgeDirections(i,j);
-                if (edgeDirection%2 == 1)
+                int numberFaces = (*discretization_).numberFaces(i,j);
+                if ((edgeDirection%2 == 1) && (numberFaces == 2))
                 {
                     (*discretization_).pressureNeumannZeroCorner(i, j, edgeDirection);
                 }
@@ -29,6 +30,8 @@ void PressureSolver::applyBoundaryConditions()
                     else if ((*discretization_).setup(i,j) == (*discretization_).indexInflow())
                         (*discretization_).pressureNeumannZero(i, j, edgeDirection);
                     else if ((*discretization_).setup(i,j) == (*discretization_).indexOutflow())
+                        (*discretization_).pressureNeumannZero(i, j, edgeDirection);
+                    else if ((*discretization_).setup(i,j) == (*discretization_).indexPressure())
                         (*discretization_).pressureDirichlet(i, j, edgeDirection, (*discretization_).pRB(i,j));
                 }
             }

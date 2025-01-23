@@ -11,6 +11,7 @@ StaggeredGrid::StaggeredGrid(std::array<int,2> nCells, std::array<double,2> mesh
     rhs_(FieldVariable({nCells[0]+2, nCells[1]+2}, {-0.5*meshWidth[0], -0.5*meshWidth[1]}, meshWidth)), // first (i,j=0) rhs node (halo node) lives half a x- and half a y-mesh width apart from the cartesian origin (x,y=0) (analog to p)
     setup_({nCells[0]+2, nCells[1]+2}),
     edgeDirections_({nCells[0]+2, nCells[1]+2}),
+    numberFaces_({nCells[0]+2, nCells[1]+2}),
     uIn_({nCells[0]+2, nCells[1]+2}),
     vIn_({nCells[0]+2, nCells[1]+2}),
     pRB_({nCells[0]+2, nCells[1]+2})
@@ -108,6 +109,16 @@ int& StaggeredGrid::edgeDirections(int i, int j)
     return edgeDirections_(i,j);
 }
 
+int StaggeredGrid::numberFaces(int i, int j) const
+{
+    return numberFaces_(i,j);
+}
+
+int& StaggeredGrid::numberFaces(int i, int j)
+{
+    return numberFaces_(i,j);
+}
+
 double StaggeredGrid::uIn(int i, int j) const
 {
     return uIn_(i,j);
@@ -161,6 +172,11 @@ int StaggeredGrid::indexInflow()
 int StaggeredGrid::indexOutflow()
 {
     return 4;
+}
+
+int StaggeredGrid::indexPressure()
+{
+    return 5;
 }
 
 double StaggeredGrid::dx() const 

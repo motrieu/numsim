@@ -215,33 +215,60 @@ void Computation::initializeEdgeDirections()
         {
             if ((*discretization_).setup(i,j) != (*discretization_).indexFluid())
             {
-                std::vector<int> edgeDirections;
+                std::vector<int> edgeDirs;
                 if ((j+1 < (*discretization_).setupJEnd()) && ((*discretization_).setup(i,j+1) == (*discretization_).indexFluid()))
-                    edgeDirections.push_back(0);
+                    edgeDirs.push_back(0);
                 if ((i+1 < (*discretization_).setupIEnd()) && ((*discretization_).setup(i+1,j) == (*discretization_).indexFluid()))
-                    edgeDirections.push_back(1);
+                    edgeDirs.push_back(1);
                 if ((j-1 >= (*discretization_).setupJBegin()) && ((*discretization_).setup(i,j-1) == (*discretization_).indexFluid()))
-                    edgeDirections.push_back(2);
+                    edgeDirs.push_back(2);
                 if ((i-1 >= (*discretization_).setupIBegin()) && ((*discretization_).setup(i-1,j) == (*discretization_).indexFluid()))
-                    edgeDirections.push_back(3);
+                    edgeDirs.push_back(3);
                 
-                if (edgeDirections.size() > 2)
+                if (edgeDirs.size() > 2)
                     throw std::invalid_argument("Only corners or edges allowed for obstacles, more than 2 edges given.");
                 
-                if (edgeDirections.size() == 2)
+                if (edgeDirs.size() == 2)
                 {
-                    if (edgeDirections[1] != (edgeDirections[0]+1)%4)
+                    if (edgeDirs[1] != (edgeDirs[0]+1)%4)
                         throw std::invalid_argument("Only corners or edges allowed for obstacles, 2 opposite edges given.");
 
                     if ((*discretization_).setup(i,j) == (*discretization_).indexNoSlip())
-                        (*discretization_).edgeDirections(i,j) = edgeDirections[0]*2 + 1;
+                        (*discretization_).edgeDirections(i,j) = edgeDirs[0]*2 + 1;
                     else
                         throw std::invalid_argument("Only NOSLIP allowed for corners of obstacles.");
                 }
-                else if (edgeDirections.size() == 1)
+                else if (edgeDirs.size() == 1)
                 {
-                    (*discretization_).edgeDirections(i,j) = edgeDirections[0]*2;
+                    (*discretization_).edgeDirections(i,j) = edgeDirs[0]*2;
                 }
+                else
+                {
+                    std::vector<int> diagonalFluidCells;
+                    if ((i+1 < (*discretization_).setupIEnd())
+                            && (j+1 < (*discretization_).setupJEnd())
+                            && ((*discretization_).setup(i+1,j+1) == (*discretization_).indexFluid()))
+                        diagonalFluidCells.push_back(1);
+                    if ((i+1 < (*discretization_).setupIEnd())
+                            && (j-1 >= (*discretization_).setupJBegin())
+                            && ((*discretization_).setup(i+1,j-1) == (*discretization_).indexFluid()))
+                        diagonalFluidCells.push_back(3);
+                    if ((i-1 >= (*discretization_).setupIBegin())
+                            && (j-1 >= (*discretization_).setupJBegin())
+                            && ((*discretization_).setup(i-1,j-1) == (*discretization_).indexFluid()))
+                        diagonalFluidCells.push_back(5);
+                    if ((i-1 >= (*discretization_).setupIBegin())
+                            && (j+1 < (*discretization_).setupJEnd())
+                            && ((*discretization_).setup(i-1,j+1) == (*discretization_).indexFluid()))
+                        diagonalFluidCells.push_back(7);
+                    
+                    if (diagonalFluidCells.size() > 1)
+                        throw std::invalid_argument("Only one diagonal adjoining fluid cell allowed, more than 1 given.");
+                    else if (diagonalFluidCells.size() == 1)
+                        (*discretization_).edgeDirections(i,j) = diagonalFluidCells[0];
+                }
+
+                (*discretization_).numberFaces(i,j) = edgeDirs.size();
             }
         }
     }
@@ -254,7 +281,8 @@ void Computation::applyBoundaryConditions()
         for (int j = (*discretization_).setupJBegin(); j < (*discretization_).setupJEnd(); j++)
         {
             if (((*discretization_).setup(i,j) != (*discretization_).indexFluid())
-                    && (*discretization_).edgeDirections(i,j) != -1)
+                    && ((*discretization_).edgeDirections(i,j) != -1)
+                    && ((*discretization_).numberFaces(i,j) != 0))
             {
                 int edgeDirection = (*discretization_).edgeDirections(i,j);
                 if (edgeDirection%2 == 1)
@@ -271,7 +299,32 @@ void Computation::applyBoundaryConditions()
                         (*discretization_).inflow(i, j, edgeDirection, (*discretization_).uIn(i,j), (*discretization_).vIn(i,j));
                     else if ((*discretization_).setup(i,j) == (*discretization_).indexOutflow())
                         (*discretization_).outflow(i, j, edgeDirection);
+                    else if ((*discretization_).setup(i,j) == (*discretization_).indexPressure())
+                        (*discretization_).outflow(i, j, edgeDirection);
                 }
+            }
+        }
+    }
+
+    for (int i = (*discretization_).setupIBegin(); i < (*discretization_).setupIEnd(); i++)
+    {
+        for (int j = (*discretization_).setupJBegin(); j < (*discretization_).setupJEnd(); j++)
+        {
+            if (((*discretization_).setup(i,j) != (*discretization_).indexFluid())
+                    && ((*discretization_).edgeDirections(i,j) != -1)
+                    && ((*discretization_).numberFaces(i,j) == 0))
+            {
+                int edgeDirection = (*discretization_).edgeDirections(i,j);
+                if ((*discretization_).setup(i,j) == (*discretization_).indexNoSlip())
+                    (*discretization_).noSlipDiagonal(i, j, edgeDirection);
+                else if ((*discretization_).setup(i,j) == (*discretization_).indexSlip())
+                    (*discretization_).slipDiagonal(i, j, edgeDirection);
+                else if ((*discretization_).setup(i,j) == (*discretization_).indexInflow())
+                    (*discretization_).inflowDiagonal(i, j, edgeDirection, (*discretization_).uIn(i,j), (*discretization_).vIn(i,j));
+                else if ((*discretization_).setup(i,j) == (*discretization_).indexOutflow())
+                    (*discretization_).outflowDiagonal(i, j, edgeDirection);
+                else if ((*discretization_).setup(i,j) == (*discretization_).indexPressure())
+                    (*discretization_).outflowDiagonal(i, j, edgeDirection);
             }
         }
     }
@@ -305,8 +358,6 @@ void Computation::computeTimeStepWidth()
                 vAbsMax = vAbs;
         }
     }
-
-    std::cout << uAbsMax << std::endl;
 
     const double dtConvectiveU = dx / uAbsMax;
     const double dtConvectiveV = dy / vAbsMax;

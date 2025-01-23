@@ -93,6 +93,8 @@ public:
     int& setup(int i, int j);
     int edgeDirections(int i, int j) const;
     int& edgeDirections(int i, int j);
+    int numberFaces(int i, int j) const;
+    int& numberFaces(int i, int j);
     double uIn(int i, int j) const;
     double& uIn(int i, int j);
     double vIn(int i, int j) const;
@@ -108,9 +110,13 @@ public:
     /// @return 
     int indexInflow();
 
-    /// @brief combined with pressure Dirichlet
+    /// @brief combined with pressure Neumann
     /// @return 
     int indexOutflow();
+
+    /// @brief OUTFLOW and PRESSURE combined
+    /// @return 
+    int indexPressure();
 
     /// @brief get mesh width in x-direction
     /// @return mesh width in x-direction
@@ -205,6 +211,7 @@ protected:
 
     Array2DInt setup_;
     Array2DInt edgeDirections_;
+    Array2DInt numberFaces_;
     Array2D uIn_;
     Array2D vIn_;
     Array2D pRB_;
