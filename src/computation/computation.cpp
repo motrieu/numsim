@@ -14,8 +14,12 @@ void Computation::runSimulation()
 
     while (time < settings_.endTime)
     {
+        std::cout << time << std::endl;
+
         // boundary conditions of u and v in halo cells need to be set in each time step
         applyBoundaryConditions();
+
+        (*outputWriterParaview_).writeFile(time);
 
         // time step width needs to be calculated each time step to ensure stability
         computeTimeStepWidth();
@@ -33,9 +37,6 @@ void Computation::runSimulation()
         computeVelocities();
 
         time += dt_;
-
-        (*outputWriterParaview_).writeFile(time);
-        // (*outputWriterText_).writeFile(time);
     }
 }
 
@@ -136,7 +137,7 @@ void Computation::loadSetupFromFile(std::string filename)
             readPRB = true;
         }
         
-        if (readPRB && std::isdigit(line[0]))
+        if (readPRB && (std::isdigit(line[0]) || std::isdigit(line[1])))
         {
             int valueStartIndex = 0;
             int valueEndIndex = 0;
@@ -153,7 +154,7 @@ void Computation::loadSetupFromFile(std::string filename)
             }
             j++;
         }
-        else if (readVIn && std::isdigit(line[0]))
+        else if (readVIn && (std::isdigit(line[0]) || std::isdigit(line[1])))
         {
             int valueStartIndex = 0;
             int valueEndIndex = 0;
@@ -170,7 +171,7 @@ void Computation::loadSetupFromFile(std::string filename)
             }
             j++;
         }
-        else if (readUIn && std::isdigit(line[0]))
+        else if (readUIn && (std::isdigit(line[0]) || std::isdigit(line[1])))
         {
             int valueStartIndex = 0;
             int valueEndIndex = 0;
@@ -187,7 +188,7 @@ void Computation::loadSetupFromFile(std::string filename)
             }
             j++;
         }
-        else if (readSetup && std::isdigit(line[0]))
+        else if (readSetup && (std::isdigit(line[0]) || std::isdigit(line[1])))
         {
             int valueStartIndex = 0;
             int valueEndIndex = 0;
@@ -311,20 +312,61 @@ void Computation::applyBoundaryConditions()
         for (int j = (*discretization_).setupJBegin(); j < (*discretization_).setupJEnd(); j++)
         {
             if (((*discretization_).setup(i,j) != (*discretization_).indexFluid())
-                    && ((*discretization_).edgeDirections(i,j) != -1)
-                    && ((*discretization_).numberFaces(i,j) == 0))
+                    && ((*discretization_).edgeDirections(i,j) != -1))
             {
                 int edgeDirection = (*discretization_).edgeDirections(i,j);
-                if ((*discretization_).setup(i,j) == (*discretization_).indexNoSlip())
-                    (*discretization_).noSlipDiagonal(i, j, edgeDirection);
-                else if ((*discretization_).setup(i,j) == (*discretization_).indexSlip())
-                    (*discretization_).slipDiagonal(i, j, edgeDirection);
-                else if ((*discretization_).setup(i,j) == (*discretization_).indexInflow())
-                    (*discretization_).inflowDiagonal(i, j, edgeDirection, (*discretization_).uIn(i,j), (*discretization_).vIn(i,j));
-                else if ((*discretization_).setup(i,j) == (*discretization_).indexOutflow())
-                    (*discretization_).outflowDiagonal(i, j, edgeDirection);
-                else if ((*discretization_).setup(i,j) == (*discretization_).indexPressure())
-                    (*discretization_).outflowDiagonal(i, j, edgeDirection);
+                if ((*discretization_).numberFaces(i,j) == 0)
+                {
+                    if ((*discretization_).setup(i,j) == (*discretization_).indexNoSlip())
+                        (*discretization_).noSlipDiagonal(i, j, edgeDirection);
+                    else if ((*discretization_).setup(i,j) == (*discretization_).indexSlip())
+                        (*discretization_).slipDiagonal(i, j, edgeDirection);
+                    else if ((*discretization_).setup(i,j) == (*discretization_).indexInflow())
+                        (*discretization_).inflowDiagonal(i, j, edgeDirection, (*discretization_).uIn(i,j), (*discretization_).vIn(i,j));
+                    else if ((*discretization_).setup(i,j) == (*discretization_).indexOutflow())
+                        (*discretization_).outflowDiagonal(i, j, edgeDirection);
+                    else if ((*discretization_).setup(i,j) == (*discretization_).indexPressure())
+                        (*discretization_).outflowDiagonal(i, j, edgeDirection);
+                }
+                else
+                {
+                    if (edgeDirection == 0)
+                    {
+                        (*discretization_).g(i,j) = (*discretization_).v(i,j);
+                    }
+                    else if (edgeDirection == 1)
+                    {
+                        (*discretization_).f(i,j) = (*discretization_).u(i,j);
+                        (*discretization_).g(i,j) = (*discretization_).v(i,j);
+                    }
+                    else if (edgeDirection == 2)
+                    {
+                        (*discretization_).f(i,j) = (*discretization_).u(i,j);
+                    }
+                    else if (edgeDirection == 3)
+                    {
+                        (*discretization_).f(i,j) = (*discretization_).u(i,j);
+                        (*discretization_).g(i,j-1) = (*discretization_).v(i,j-1);
+                    }
+                    else if (edgeDirection == 4)
+                    {
+                        (*discretization_).g(i,j-1) = (*discretization_).v(i,j-1);
+                    }
+                    else if (edgeDirection == 5)
+                    {
+                        (*discretization_).f(i-1,j) = (*discretization_).u(i-1,j);
+                        (*discretization_).g(i,j-1) = (*discretization_).v(i,j-1);
+                    }
+                    else if (edgeDirection == 6)
+                    {
+                        (*discretization_).f(i-1,j) = (*discretization_).u(i-1,j);
+                    }
+                    else if (edgeDirection == 7)
+                    {
+                        (*discretization_).f(i-1,j) = (*discretization_).u(i-1,j);
+                        (*discretization_).g(i,j) = (*discretization_).v(i,j);
+                    }
+                }
             }
         }
     }
