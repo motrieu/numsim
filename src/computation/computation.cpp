@@ -231,7 +231,7 @@ void Computation::initializeEdgeDirections()
                 
                 if (edgeDirs.size() == 2)
                 {
-                    if (edgeDirs[1] != (edgeDirs[0]+1)%4)
+                    if ((edgeDirs[1]-edgeDirs[0]) == 2)
                         throw std::invalid_argument("Only corners or edges allowed for obstacles, 2 opposite edges given.");
 
                     if ((*discretization_).setup(i,j) == (*discretization_).indexNoSlip())
