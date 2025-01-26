@@ -231,11 +231,18 @@ void Computation::initializeEdgeDirections()
                 
                 if (edgeDirs.size() == 2)
                 {
-                    if ((edgeDirs[1]-edgeDirs[0]) == 2)
+                    int edgeDirsDiff = edgeDirs[1]-edgeDirs[0];
+                    if (edgeDirsDiff == 2)
                         throw std::invalid_argument("Only corners or edges allowed for obstacles, 2 opposite edges given.");
-
                     if ((*discretization_).setup(i,j) == (*discretization_).indexNoSlip())
-                        (*discretization_).edgeDirections(i,j) = edgeDirs[0]*2 + 1;
+                    {
+                        if (edgeDirsDiff == 1)
+                            (*discretization_).edgeDirections(i,j) = edgeDirs[0]*2 + 1;
+                        else if (edgeDirsDiff == 3)
+                            (*discretization_).edgeDirections(i,j) = 7;
+                        else
+                            throw std::invalid_argument("Invalid edge-direction combination given.");
+                    }
                     else
                         throw std::invalid_argument("Only NOSLIP allowed for corners of obstacles.");
                 }

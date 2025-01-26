@@ -42,16 +42,20 @@ void BoundaryConditions::noSlipCorner(int i, int j, int directionIndex)
     {
         u(i,j) = 0.0;
         v(i,j-1) = 0.0;
+        v(i,j) = -v(i+1,j);
     }
     else if (directionIndex == 5)
     {
         u(i-1,j) = 0.0;
         v(i,j-1) = 0.0;
+        u(i,j) = -u(i,j-1);
+        v(i,j) = -v(i-1,j);
     }
     else if (directionIndex == 7)
     {
         u(i-1,j) = 0.0;
         v(i,j) = 0.0;
+        u(i,j) = -u(i,j+1);
     }
 }
 

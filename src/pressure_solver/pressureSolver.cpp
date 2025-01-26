@@ -44,7 +44,7 @@ const double PressureSolver::calcResNormSquared() const
     const double dx = (*discretization_).dx();
     const double dy = (*discretization_).dy();
     
-    double resNormSquared = 0;
+    double resNormSquared = 0.0;
     for (int i=(*discretization_).pIBegin(); i < (*discretization_).pIEnd(); i++)
     {
         for (int j=(*discretization_).pJBegin(); j < (*discretization_).pJEnd(); j++)

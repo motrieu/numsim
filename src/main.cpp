@@ -2,7 +2,6 @@
 
 int main(int argc, char *argv[])
 {
-
   Computation computation = Computation();
 
   computation.initialize(argc, argv);
