@@ -24,6 +24,8 @@ public:
     /// @return inerpolated value at cartesian coordinate (x,y)
     double interpolateAt(double x, double y) const;
 
+    const std::array<double,2> origin() const;
+
 private:
     /// @brief cartesian coordinates of the point with (i,j) = (0,0), this is different from (0,0) for all field variables 
     const std::array<double,2> origin_;

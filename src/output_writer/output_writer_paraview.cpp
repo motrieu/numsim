@@ -60,7 +60,8 @@ void OutputWriterParaview::writeFile(double currentTime)
     {
       const double x = i*dx;
 
-      arrayPressure->SetValue(index, discretization_->p().interpolateAt(x,y));
+      if (!discretization_->interpolationContainsNoSlip(x, y))
+        arrayPressure->SetValue(index, discretization_->p().interpolateAt(x,y));
     }
   }
 
@@ -93,12 +94,15 @@ void OutputWriterParaview::writeFile(double currentTime)
     {
       const double x = i*dx;
 
-      std::array<double,3> velocityVector;
-      velocityVector[0] = discretization_->u().interpolateAt(x,y);
-      velocityVector[1] = discretization_->v().interpolateAt(x,y);
-      velocityVector[2] = 0.0;    // z-direction is 0
+      if (!(discretization_->interpolationContainsNoSlip(x, y)))
+      {
+        std::array<double,3> velocityVector;
+        velocityVector[0] = discretization_->u().interpolateAt(x,y);
+        velocityVector[1] = discretization_->v().interpolateAt(x,y);
+        velocityVector[2] = 0.0;    // z-direction is 0
 
-      arrayVelocity->SetTuple(index, velocityVector.data());
+        arrayVelocity->SetTuple(index, velocityVector.data());
+      }
     }
   }
   // now, we should have added as many values as there are points in the vtk data structure

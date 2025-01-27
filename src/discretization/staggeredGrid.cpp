@@ -1,5 +1,7 @@
 #include "staggeredGrid.h"
 
+#include <cmath>
+
 StaggeredGrid::StaggeredGrid(std::array<int,2> nCells, std::array<double,2> meshWidth) :
     nCells_(nCells), 
     meshWidth_(meshWidth), 
@@ -99,6 +101,29 @@ int& StaggeredGrid::setup(int i, int j)
     return setup_(i,j);
 }
 
+bool StaggeredGrid::interpolationContainsNoSlip(double x, double y) const
+{
+    // consider that different field variables live on different parts of the cell, which is reflected in the different origins
+    const double xTransformed = (x - p().origin()[0])/meshWidth_[0];
+    const double yTransformed = (y - p().origin()[1])/meshWidth_[1];
+
+    // obtain the adjacent cell indices by integer casting 
+    const int leftXIndex = xTransformed;
+    const int rightXIndex = leftXIndex + 1;
+    const int lowerYIndex = yTransformed;
+    const int upperYIndex = lowerYIndex + 1;
+
+    // calculates how to weight the interpolations in x- and y-direction 
+    const double percentageX = xTransformed - std::floor(xTransformed);
+    const double percentageY = yTransformed - std::floor(yTransformed);
+
+    bool containsNoSlip = false;
+    if ((setup(leftXIndex, lowerYIndex) == indexNoSlip()) || (setup(rightXIndex, lowerYIndex) == indexNoSlip())
+            || (setup(leftXIndex, upperYIndex) == indexNoSlip()) || (setup(rightXIndex, upperYIndex) == indexNoSlip()))
+        containsNoSlip = true;
+    return containsNoSlip;
+}
+
 int StaggeredGrid::edgeDirections(int i, int j) const
 {
     return edgeDirections_(i,j);
@@ -149,32 +174,32 @@ double& StaggeredGrid::pRB(int i, int j)
     return pRB_(i,j);
 }
 
-int StaggeredGrid::indexFluid()
+int StaggeredGrid::indexFluid() const
 {
     return 0;
 }
 
-int StaggeredGrid::indexNoSlip()
+int StaggeredGrid::indexNoSlip() const
 {
     return 1;
 }
 
-int StaggeredGrid::indexSlip()
+int StaggeredGrid::indexSlip() const
 {
     return 2;
 }
 
-int StaggeredGrid::indexInflow()
+int StaggeredGrid::indexInflow() const
 {
     return 3;
 }
 
-int StaggeredGrid::indexOutflow()
+int StaggeredGrid::indexOutflow() const
 {
     return 4;
 }
 
-int StaggeredGrid::indexPressure()
+int StaggeredGrid::indexPressure() const
 {
     return 5;
 }

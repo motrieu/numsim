@@ -37,3 +37,8 @@ double FieldVariable::interpolateAt(double x, double y) const
 
   return interpolatedValue;
 }
+
+const std::array<double,2> FieldVariable::origin() const
+{
+  return origin_;
+}

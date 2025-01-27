@@ -91,6 +91,9 @@ public:
 
     int setup(int i, int j) const;
     int& setup(int i, int j);
+
+    bool interpolationContainsNoSlip(double x, double y) const;
+
     int edgeDirections(int i, int j) const;
     int& edgeDirections(int i, int j);
     int numberFaces(int i, int j) const;
@@ -102,21 +105,21 @@ public:
     double pRB(int i, int j) const;
     double& pRB(int i, int j);
  
-    int indexFluid();
-    int indexNoSlip();
-    int indexSlip();
+    int indexFluid() const;
+    int indexNoSlip() const;
+    int indexSlip() const;
 
     /// @brief combined with pressure Neumann
     /// @return 
-    int indexInflow();
+    int indexInflow() const;
 
     /// @brief combined with pressure Neumann
     /// @return 
-    int indexOutflow();
+    int indexOutflow() const;
 
     /// @brief OUTFLOW and PRESSURE combined
     /// @return 
-    int indexPressure();
+    int indexPressure() const;
 
     /// @brief get mesh width in x-direction
     /// @return mesh width in x-direction
