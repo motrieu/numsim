@@ -60,10 +60,12 @@ void OutputWriterParaview::writeFile(double currentTime)
     {
       const double x = i*dx;
 
-      if (!discretization_->interpolationContainsNoSlip(x, y))
+      if (discretization_->interpolationContainsNoSlip(x, y) == 0)
         arrayPressure->SetValue(index, discretization_->p().interpolateAt(x,y));
-      else
+      else if (discretization_->interpolationContainsNoSlip(x, y) == 1)
         arrayPressure->SetValue(index, 0.0);
+      else
+        arrayPressure->SetValue(index, -1.0);
     }
   }
 
@@ -97,7 +99,7 @@ void OutputWriterParaview::writeFile(double currentTime)
       const double x = i*dx;
 
       std::array<double,3> velocityVector;
-      if (!(discretization_->interpolationContainsNoSlip(x, y)))
+      if (discretization_->interpolationContainsNoSlip(x, y) == 0)
       {
         velocityVector[0] = discretization_->u().interpolateAt(x,y);
         velocityVector[1] = discretization_->v().interpolateAt(x,y);

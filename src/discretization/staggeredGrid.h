@@ -92,7 +92,7 @@ public:
     int setup(int i, int j) const;
     int& setup(int i, int j);
 
-    bool interpolationContainsNoSlip(double x, double y) const;
+    int interpolationContainsNoSlip(double x, double y) const;
 
     int edgeDirections(int i, int j) const;
     int& edgeDirections(int i, int j);

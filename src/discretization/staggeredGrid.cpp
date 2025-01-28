@@ -101,7 +101,7 @@ int& StaggeredGrid::setup(int i, int j)
     return setup_(i,j);
 }
 
-bool StaggeredGrid::interpolationContainsNoSlip(double x, double y) const
+int StaggeredGrid::interpolationContainsNoSlip(double x, double y) const
 {
     // consider that different field variables live on different parts of the cell, which is reflected in the different origins
     const double xTransformed = (x - p().origin()[0])/meshWidth_[0];
@@ -117,11 +117,13 @@ bool StaggeredGrid::interpolationContainsNoSlip(double x, double y) const
     const double percentageX = xTransformed - std::floor(xTransformed);
     const double percentageY = yTransformed - std::floor(yTransformed);
 
-    bool containsNoSlip = false;
-    if ((setup(leftXIndex, lowerYIndex) == indexNoSlip()) || (setup(rightXIndex, lowerYIndex) == indexNoSlip())
+    if ((setup(leftXIndex, lowerYIndex) == indexNoSlip()) && (setup(rightXIndex, lowerYIndex) == indexNoSlip())
+            && (setup(leftXIndex, upperYIndex) == indexNoSlip()) && (setup(rightXIndex, upperYIndex) == indexNoSlip()))
+        return 2;
+    else if ((setup(leftXIndex, lowerYIndex) == indexNoSlip()) || (setup(rightXIndex, lowerYIndex) == indexNoSlip())
             || (setup(leftXIndex, upperYIndex) == indexNoSlip()) || (setup(rightXIndex, upperYIndex) == indexNoSlip()))
-        containsNoSlip = true;
-    return containsNoSlip;
+        return 1;
+    return 0;
 }
 
 int StaggeredGrid::edgeDirections(int i, int j) const
