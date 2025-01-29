@@ -35,10 +35,16 @@ public:
 
 private:
     
+    /// @brief reads in parameters from parameter file including the data in setup, uIN, vIN, pRB for all cells
+    /// @param filename parameter file that needs to be read
     void loadSetupFromFile(std::string filename);
 
+    /// @brief initializing edgeDirections array for each element
+    ///        0 for north, 2 for east, 4 for south, 6 for west
+    ///        odd indices 1, 3, 5, 7 indicate either a corner fluid cell or a diagonal fluid cell (distinguished with help of numberFaces array)
     void initializeEdgeDirections();
     
+    /// @brief 
     void applyBoundaryConditions();
 
     /// @brief computes time step width for each time step such that the stability (diffusive and convective) is ensured

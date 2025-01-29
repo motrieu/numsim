@@ -17,7 +17,10 @@ public:
     /// @brief solves for new pressure values, the new values are stored in the field variable p, implementation depends on which solver is used (GS or SOR)
     virtual void solve() = 0;
 
-    /// @brief sets boundary values for field variable p, the pressure value of the closest inner cell is used to set the boundary 
+    /// @brief sets boundary values for field variable p depending on demanded boundary condition written in the setup array
+    ///        pressureNeumannZero is used for SLIP, NOLSIP, INFLOW, OUTFLOW boundary condition
+    ///        pressureDirichletZero is used for PRESSURE boundary condition
+    ///        pressureNeumannZeroCorner is used for corner fluid cells
     void applyBoundaryConditions();
 
 protected:
