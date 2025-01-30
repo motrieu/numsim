@@ -76,12 +76,6 @@ void Computation::initialize(int argc, char *argv[])
     initializeEdgeDirections();
 
     // outputWriterText_ = std::make_unique<OutputWriterText>(discretization_);
-
-    // boundary conditions for u and v on the boundary faces only need to be set once in the beginning of the computation
-    //applyBCOnBoundary();
-
-    // boundary conditions for F and G on the boundary faces only need to be set once in the beginning of the computation
-    //applyPreliminaryBCOnBoundary();
 }
 
 void Computation::loadSetupFromFile(std::string filename)
