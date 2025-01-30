@@ -12,17 +12,24 @@ void PressureSolver::applyBoundaryConditions()
     {
         for (int j = (*discretization_).setupJBegin(); j < (*discretization_).setupJEnd(); j++)
         {
+            //pressure boundary values are set for obstacle cells
+            //inner obstacles are not relevant and therefore not considered
             if (((*discretization_).setup(i,j) != (*discretization_).indexFluid())
                     && (*discretization_).edgeDirections(i,j) != -1)
             {
                 int edgeDirection = (*discretization_).edgeDirections(i,j);
                 int numberFaces = (*discretization_).numberFaces(i,j);
+
+                //if the obstacle has a fluid corner (not a diagonal one!)
                 if ((edgeDirection%2 == 1) && (numberFaces == 2))
                 {
                     (*discretization_).pressureNeumannZeroCorner(i, j, edgeDirection);
                 }
                 else
                 {
+                    //if the obstacle either has one fluid edge or a fluid diagonal cell the pressure Neumann zero
+                    //is applied for NOSLIP, SLIP, INFLOW, OUTFLOW
+                    //for PRESSURE boundary condition the pressure Dirichlet is applied
                     if ((*discretization_).setup(i,j) == (*discretization_).indexNoSlip())
                         (*discretization_).pressureNeumannZero(i, j, edgeDirection);
                     else if ((*discretization_).setup(i,j) == (*discretization_).indexSlip())
