@@ -278,7 +278,18 @@ def generateFromImage():
 
     imageFileName = fd.askopenfilename()
 
-    generateParams(imageFileName)
+    img = Image.open(imageFileName)
+    npimg = np.asarray(img)
+    imagePixelSize = np.size(npimg,1) / (numCellsX+1)
+
+    buildDrawEnvironment()
+    for j in range(numCellsY):
+        for i in range(numCellsX):
+            color = npimg[int((j+0.5)*imagePixelSize), int((i+0.5)*imagePixelSize)]
+            canvas.create_rectangle(i*pixelSize, j*pixelSize, (i+1)*pixelSize, (j+1)*pixelSize, fill=from_rgb((color[0],color[1],color[2])), outline="")
+
+
+    #generateParams(imageFileName)
 
 def buildDrawEnvironment():
     global numCellsX
@@ -305,7 +316,7 @@ def buildDrawEnvironment():
     while (numCellsX*pixelSize < maxWindowWidth) and (numCellsY*pixelSize < maxWindowHeight):
         pixelSize += 1
 
-    canvas.config(width=numCellsX*pixelSize-2, height=numCellsY*pixelSize-2)
+    canvas.config(width=numCellsX*pixelSize-4, height=numCellsY*pixelSize-4)
     canvas.pack()
     subbox.pack()
 

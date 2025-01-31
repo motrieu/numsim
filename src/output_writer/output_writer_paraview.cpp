@@ -61,12 +61,10 @@ void OutputWriterParaview::writeFile(double currentTime)
       const double x = i*dx;
 
       // needed to remove boundary values in obstacles and to be able to apply threshold filter in paraview to visualize obstacles
-      if (discretization_->interpolationContainsNoSlip(x, y) == 0)
+      if (!(discretization_->interpolationContainsNoSlip(x, y) == 2))
         arrayPressure->SetValue(index, discretization_->p().interpolateAt(x,y));
-      else if (discretization_->interpolationContainsNoSlip(x, y) == 1)
-        arrayPressure->SetValue(index, 0.0);
       else
-        arrayPressure->SetValue(index, -1.0);
+        arrayPressure->SetValue(index, -1.0e10);
     }
   }
 
