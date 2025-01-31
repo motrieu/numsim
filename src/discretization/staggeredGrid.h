@@ -101,10 +101,14 @@ public:
     /// @return reference to setup value of element i,j
     int& setup(int i, int j);
 
-    /// @brief 
-    /// @param x 
-    /// @param y 
-    /// @return 
+    /// @brief check whether the interpolation for p (as the DOF's of p are in the center) at position x, y
+    ///        (a) only contains obstacle cells, i.e. is inside an obstacle (return index 2),
+    ///        (b) conatins at least one obstacle cell, i.e. is at an obstacle boundary (return index 1),
+    ///        (c) does not contain any obstacle cell, i.e. is between fluid cells (return index 1)
+    ///        is needed in output_writer_paraview in order to be able to aply a threshold filter in paraview
+    /// @param x cartesian x-coordinate
+    /// @param y cartesian y-coordinate
+    /// @return integer index 0, 1, 2 according to cases (c), (b), (a)
     int interpolationContainsNoSlip(double x, double y) const;
 
     /// @brief get constant edgeDirection value of element i,j
@@ -181,15 +185,15 @@ public:
     /// @return 2
     int indexSlip() const;
 
-    /// @brief index that indicates an obstacle cell with INFLOW condition, combined with Pressure Neumann
+    /// @brief index that indicates an boundary cell with INFLOW condition, combined with Pressure Neumann
     /// @return  
     int indexInflow() const;
 
-    /// @brief index that indicates an obstacle cell with OUTFLOW condition, combined with Pressure Neumann
+    /// @brief index that indicates an boundary cell with OUTFLOW condition, combined with Pressure Neumann
     /// @return 4
     int indexOutflow() const;
 
-    /// @brief index that indicates an obstacle cell with PRESSURE (Pressure Dirichlet) condition, combined with OUTFLOW 
+    /// @brief index that indicates an boundary cell with PRESSURE (Pressure Dirichlet) condition, combined with OUTFLOW 
     /// @return 5
     int indexPressure() const;
 

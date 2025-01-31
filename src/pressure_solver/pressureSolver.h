@@ -19,7 +19,7 @@ public:
 
     /// @brief sets boundary values for field variable p depending on demanded boundary condition written in the setup array
     ///        pressureNeumannZero is used for SLIP, NOLSIP, INFLOW, OUTFLOW boundary condition
-    ///        pressureDirichletZero is used for PRESSURE boundary condition
+    ///        pressureDirichlet is used for PRESSURE boundary condition
     ///        pressureNeumannZeroCorner is used for corner fluid cells
     void applyBoundaryConditions();
 

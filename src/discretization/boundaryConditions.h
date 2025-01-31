@@ -26,7 +26,7 @@ public:
     /// @param directionIndex 1 for north-east-corner, 3 for east-south-corner, 5 for south-west-corner, 7 for west-north-corner
     void noSlipCorner(int i, int j, int directionIndex);
 
-    /// @brief perform NOSLIP condition for u and v in the diagonal neighbour of element i,j indicated with directionIndex
+    /// @brief prioritize NOSLIP condition for u and v in the diagonal neighbour of element i,j indicated with directionIndex
     /// @param i index of element in x-direction
     /// @param j index of element in y-direction 
     /// @param directionIndex 1 for north-east-diagonal, 3 for east-south-diagonal, 5 for south-west-diagonal, 7 for west-north-diagonal 
@@ -38,7 +38,7 @@ public:
     /// @param directionIndex 0 for north, 2 for east, 4 for south, 6 for west
     void slip(int i, int j, int directionIndex);
 
-    /// @brief perform SLIP condition for u and v in the diagonal neighbour of element i,j indicated with directionIndex
+    /// @brief prioritize SLIP condition for u and v in the diagonal neighbour of element i,j indicated with directionIndex
     /// @param i index of element in x-direction
     /// @param j index of element in y-direction 
     /// @param directionIndex 1 for north-east-diagonal, 3 for east-south-diagonal, 5 for south-west-diagonal, 7 for west-north-diagonal
@@ -52,7 +52,7 @@ public:
     /// @param vIn Dirichlet value for v in element i,j
     void inflow(int i, int j, int directionIndex, double uIn, double vIn);
     
-    /// @brief perform INFLOW condition for u and v with Dirichlet values uIN and vIN in the diagonal neighbour of element i,j indicated with directionIndex
+    /// @brief prioritize INFLOW condition for u and v with Dirichlet values uIN and vIN in the diagonal neighbour of element i,j indicated with directionIndex
     /// @param i index of element in x-direction
     /// @param j index of element in y-direction 
     /// @param directionIndex 1 for north-east-diagonal, 3 for east-south-diagonal, 5 for south-west-diagonal, 7 for west-north-diagonal
@@ -66,7 +66,7 @@ public:
     /// @param directionIndex 0 for north, 2 for east, 4 for south, 6 for west
     void outflow(int i, int j, int directionIndex);
 
-    /// @brief perform OUTFLOW condition for u and v in the diagonal neighbour of element i,j indicated with directionIndex
+    /// @brief prioritize OUTFLOW condition for u and v in the diagonal neighbour of element i,j indicated with directionIndex
     /// @param i index of element in x-direction
     /// @param j index of element in y-direction 
     /// @param directionIndex 1 for north-east-diagonal, 3 for east-south-diagonal, 5 for south-west-diagonal, 7 for west-north-diagonal

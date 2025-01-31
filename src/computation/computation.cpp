@@ -38,6 +38,9 @@ void Computation::runSimulation()
 
         time += dt_;
     }
+
+    applyBoundaryConditions();
+    (*outputWriterParaview_).writeFile(time);
 }
 
 void Computation::initialize(int argc, char *argv[])
@@ -70,12 +73,13 @@ void Computation::initialize(int argc, char *argv[])
         throw std::invalid_argument("Only SOR and GaussSeidel are supported as pressure solvers.");
 
     outputWriterParaview_ = std::make_unique<OutputWriterParaview>(discretization_);
+    // outputWriterText_ = std::make_unique<OutputWriterText>(discretization_);
 
+    // read in setup from parameter file
     loadSetupFromFile(filename);
 
+    // needed for applying boundary conditions in the right directions
     initializeEdgeDirections();
-
-    // outputWriterText_ = std::make_unique<OutputWriterText>(discretization_);
 }
 
 void Computation::loadSetupFromFile(std::string filename)
@@ -208,7 +212,7 @@ void Computation::initializeEdgeDirections()
     {
         for (int j = (*discretization_).setupJBegin(); j < (*discretization_).setupJEnd(); j++)
         {
-            //edgeDirections are only written in obstacle cells 
+            //edgeDirections are only written in obstacle cells since boundary conditions are applied from obstacle pov
             if ((*discretization_).setup(i,j) != (*discretization_).indexFluid())
             {
                 std::vector<int> edgeDirs;
@@ -360,7 +364,7 @@ void Computation::applyBoundaryConditions()
                     else if ((*discretization_).setup(i,j) == (*discretization_).indexPressure())
                         (*discretization_).outflowDiagonal(i, j, edgeDirection);
                 }
-                //setting g and f boundary conditions depending on edgeDirections
+                //setting g and f boundary conditions depending on edgeDirections (corner or edge)
                 else
                 {
                     if (edgeDirection == 0)

@@ -15,7 +15,7 @@ public:
     /// @param omega weight for correction term, for omega=1 one receives the Gauss-Seidel algorithm
     SOR(std::shared_ptr<Discretization> discretization, double epsilon, int maximumNumberOfIterations, double omega);
 
-    /// @brief implements the SOR-algorithm that solves for the new pressure p
+    /// @brief implements the SOR-algorithm that solves for the new pressure p (only in fluid cells)
     virtual void solve();
 
 private:
