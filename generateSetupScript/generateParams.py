@@ -377,7 +377,7 @@ currentBCIndex = 0
 
 window = tk.Tk()
 window.title("NSE BCs")
-window.state('zoomed')
+#window.state('zoomed')
 
 domainSizeFrame = tk.Frame(window)
 domainSizeFrame.pack()
