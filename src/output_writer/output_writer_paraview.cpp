@@ -60,6 +60,7 @@ void OutputWriterParaview::writeFile(double currentTime)
     {
       const double x = i*dx;
 
+      // needed to remove boundary values in obstacles and to be able to apply threshold filter in paraview to visualize obstacles
       if (!(discretization_->interpolationContainsNoSlip(x, y) == 2))
         arrayPressure->SetValue(index, discretization_->p().interpolateAt(x,y));
       else
@@ -97,6 +98,7 @@ void OutputWriterParaview::writeFile(double currentTime)
       const double x = i*dx;
 
       std::array<double,3> velocityVector;
+      // needed to remove boundary values in obstacles
       if (discretization_->interpolationContainsNoSlip(x, y) == 0)
       {
         velocityVector[0] = discretization_->u().interpolateAt(x,y);

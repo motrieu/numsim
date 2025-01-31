@@ -117,12 +117,15 @@ int StaggeredGrid::interpolationContainsNoSlip(double x, double y) const
     const double percentageX = xTransformed - std::floor(xTransformed);
     const double percentageY = yTransformed - std::floor(yTransformed);
 
+    // if all cells contained in the interpolation are obstacle (NOSLIP) cells, index 2 is returned
     if ((setup(leftXIndex, lowerYIndex) == indexNoSlip()) && (setup(rightXIndex, lowerYIndex) == indexNoSlip())
             && (setup(leftXIndex, upperYIndex) == indexNoSlip()) && (setup(rightXIndex, upperYIndex) == indexNoSlip()))
         return 2;
+    // if at least one cell contained in the interpolation is an obstacle cell, index 1 is returned
     else if ((setup(leftXIndex, lowerYIndex) == indexNoSlip()) || (setup(rightXIndex, lowerYIndex) == indexNoSlip())
             || (setup(leftXIndex, upperYIndex) == indexNoSlip()) || (setup(rightXIndex, upperYIndex) == indexNoSlip()))
         return 1;
+    // index 0 is return for default
     return 0;
 }
 

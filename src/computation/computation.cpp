@@ -38,6 +38,9 @@ void Computation::runSimulation()
 
         time += dt_;
     }
+
+    applyBoundaryConditions();
+    (*outputWriterParaview_).writeFile(time);
 }
 
 void Computation::initialize(int argc, char *argv[])
@@ -70,18 +73,13 @@ void Computation::initialize(int argc, char *argv[])
         throw std::invalid_argument("Only SOR and GaussSeidel are supported as pressure solvers.");
 
     outputWriterParaview_ = std::make_unique<OutputWriterParaview>(discretization_);
-
-    loadSetupFromFile(filename);
-
-    initializeEdgeDirections();
-
     // outputWriterText_ = std::make_unique<OutputWriterText>(discretization_);
 
-    // boundary conditions for u and v on the boundary faces only need to be set once in the beginning of the computation
-    //applyBCOnBoundary();
+    // read in setup from parameter file
+    loadSetupFromFile(filename);
 
-    // boundary conditions for F and G on the boundary faces only need to be set once in the beginning of the computation
-    //applyPreliminaryBCOnBoundary();
+    // needed for applying boundary conditions in the right directions
+    initializeEdgeDirections();
 }
 
 void Computation::loadSetupFromFile(std::string filename)
@@ -214,30 +212,42 @@ void Computation::initializeEdgeDirections()
     {
         for (int j = (*discretization_).setupJBegin(); j < (*discretization_).setupJEnd(); j++)
         {
+            //edgeDirections are only written in obstacle cells since boundary conditions are applied from obstacle pov
             if ((*discretization_).setup(i,j) != (*discretization_).indexFluid())
             {
                 std::vector<int> edgeDirs;
+                //if upper neighbour is fluid, index 0 is pushed as north direction
                 if ((j+1 < (*discretization_).setupJEnd()) && ((*discretization_).setup(i,j+1) == (*discretization_).indexFluid()))
                     edgeDirs.push_back(0);
+                //if right neighbour is fluid, index 1 is pushed as east direction
                 if ((i+1 < (*discretization_).setupIEnd()) && ((*discretization_).setup(i+1,j) == (*discretization_).indexFluid()))
                     edgeDirs.push_back(1);
+                //if lower neighbour is fluid, index 2 is pushed as south direction
                 if ((j-1 >= (*discretization_).setupJBegin()) && ((*discretization_).setup(i,j-1) == (*discretization_).indexFluid()))
                     edgeDirs.push_back(2);
+                //if left neighbour is fluid, index 3 is pushed as west direction
                 if ((i-1 >= (*discretization_).setupIBegin()) && ((*discretization_).setup(i-1,j) == (*discretization_).indexFluid()))
                     edgeDirs.push_back(3);
                 
+                //an obstacle cannot have more than two edgeDirections to prevent information from passing through
                 if (edgeDirs.size() > 2)
                     throw std::invalid_argument("Only corners or edges allowed for obstacles, more than 2 edges given.");
                 
+                //if an obstacle has two edges, only a corner is allowed
                 if (edgeDirs.size() == 2)
                 {
                     int edgeDirsDiff = edgeDirs[1]-edgeDirs[0];
+
+                    //no opposite edges as edgeDirections are allowed to prevent information from passing through
                     if (edgeDirsDiff == 2)
                         throw std::invalid_argument("Only corners or edges allowed for obstacles, 2 opposite edges given.");
                     if ((*discretization_).setup(i,j) == (*discretization_).indexNoSlip())
                     {
+                        //if the difference of the indices listed in edgeDirs is 1, the possible corners are 1 for north-east, 3 for east-south and 5 for south-west
                         if (edgeDirsDiff == 1)
                             (*discretization_).edgeDirections(i,j) = edgeDirs[0]*2 + 1;
+
+                        //if the difference of the indices listed in edgeDirs is 3, only the west-north corner is possible and therefore a 7 is stored in edgeDirections
                         else if (edgeDirsDiff == 3)
                             (*discretization_).edgeDirections(i,j) = 7;
                         else
@@ -246,25 +256,34 @@ void Computation::initializeEdgeDirections()
                     else
                         throw std::invalid_argument("Only NOSLIP allowed for corners of obstacles.");
                 }
+                //if an obstacle only has one edge either 0 for north, 2 for east, 4 for south and 6 for west is stored in edgeDirections
                 else if (edgeDirs.size() == 1)
                 {
                     (*discretization_).edgeDirections(i,j) = edgeDirs[0]*2;
                 }
+                //if an obstacle has no edges at all, one still needs to check for diagonal fluid cells
                 else
                 {
                     std::vector<int> diagonalFluidCells;
+                    //upper right neighbour is fluid cell, index 1 is pushed
                     if ((i+1 < (*discretization_).setupIEnd())
                             && (j+1 < (*discretization_).setupJEnd())
                             && ((*discretization_).setup(i+1,j+1) == (*discretization_).indexFluid()))
                         diagonalFluidCells.push_back(1);
+                    
+                    //lower right neighbour is fluid cell, index 3 is pushed
                     if ((i+1 < (*discretization_).setupIEnd())
                             && (j-1 >= (*discretization_).setupJBegin())
                             && ((*discretization_).setup(i+1,j-1) == (*discretization_).indexFluid()))
                         diagonalFluidCells.push_back(3);
+                    
+                    //lower left neighbour is fluid cell, index 5 is pushed
                     if ((i-1 >= (*discretization_).setupIBegin())
                             && (j-1 >= (*discretization_).setupJBegin())
                             && ((*discretization_).setup(i-1,j-1) == (*discretization_).indexFluid()))
                         diagonalFluidCells.push_back(5);
+                    
+                    //upper right neighbour is fluid cell, index 7 is pushed
                     if ((i-1 >= (*discretization_).setupIBegin())
                             && (j+1 < (*discretization_).setupJEnd())
                             && ((*discretization_).setup(i-1,j+1) == (*discretization_).indexFluid()))
@@ -276,6 +295,7 @@ void Computation::initializeEdgeDirections()
                         (*discretization_).edgeDirections(i,j) = diagonalFluidCells[0];
                 }
 
+                //numberFaces stores the number of edges an obstacle has towards fluid cells
                 (*discretization_).numberFaces(i,j) = edgeDirs.size();
             }
         }
@@ -288,15 +308,22 @@ void Computation::applyBoundaryConditions()
     {
         for (int j = (*discretization_).setupJBegin(); j < (*discretization_).setupJEnd(); j++)
         {
+            //boundary values for obstacle cells are set depending on the value written down in the setup array
+            //only obstacle cells with minimum 1 fluid edge are handled in this part
+            //no obstacle cells with diagonal fluid cells are handled in this part
             if (((*discretization_).setup(i,j) != (*discretization_).indexFluid())
                     && ((*discretization_).edgeDirections(i,j) != -1)
                     && ((*discretization_).numberFaces(i,j) != 0))
             {
                 int edgeDirection = (*discretization_).edgeDirections(i,j);
+
+                //if the edgeDirection indicates a corner the NOSLIP-corner condition for u and v is applied
                 if (edgeDirection%2 == 1)
                 {
                     (*discretization_).noSlipCorner(i, j, edgeDirection);
                 }
+                //if the edgeDirection indicates a single edge the boundary condition written down in the setup array is applied for u and v
+                //can be either NOSLIP, SLIP, INFLOW, OUTFLOW, PRESSURE
                 else
                 {
                     if ((*discretization_).setup(i,j) == (*discretization_).indexNoSlip())
@@ -321,6 +348,8 @@ void Computation::applyBoundaryConditions()
             if (((*discretization_).setup(i,j) != (*discretization_).indexFluid())
                     && ((*discretization_).edgeDirections(i,j) != -1))
             {
+                //if numberFaces is zero, then the obstacle has a diagonal fluid cell 
+                //this is why then the diagonal boundary functions are used to apply the boundary conditions
                 int edgeDirection = (*discretization_).edgeDirections(i,j);
                 if ((*discretization_).numberFaces(i,j) == 0)
                 {
@@ -335,6 +364,7 @@ void Computation::applyBoundaryConditions()
                     else if ((*discretization_).setup(i,j) == (*discretization_).indexPressure())
                         (*discretization_).outflowDiagonal(i, j, edgeDirection);
                 }
+                //setting g and f boundary conditions depending on edgeDirections (corner or edge)
                 else
                 {
                     if (edgeDirection == 0)
@@ -377,7 +407,7 @@ void Computation::applyBoundaryConditions()
             }
         }
     }
-
+    //applying boundary conditions for pressure
     (*pressureSolver_).applyBoundaryConditions();
 }
 
