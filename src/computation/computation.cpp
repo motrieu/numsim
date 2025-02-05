@@ -16,7 +16,6 @@ void Computation::runSimulation()
     {
         std::cout << time << std::endl;
 
-        // boundary conditions of u and v in halo cells need to be set in each time step
         applyBoundaryConditions();
 
         (*outputWriterParaview_).writeFile(time);
